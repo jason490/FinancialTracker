@@ -1,0 +1,586 @@
+.page {
+  position: relative;
+  animation: rise 0.65s ease both;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.headerTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.08;
+  margin: 0.35rem 0 0;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 42rem;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.primaryButton {
+  background: var(--accent);
+  color: #fff;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.secondaryButton {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.secondaryButton:hover {
+  border-color: var(--accent);
+}
+
+.gridSection {
+  display: grid;
+  gap: 1rem;
+}
+
+.editBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.editActions {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.errorBanner {
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.gridItem {
+  position: relative;
+  height: auto;
+  min-height: 0;
+}
+
+.span2 {
+  grid-column: span 1;
+}
+
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: 1.15rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.widgetHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.widgetTitle {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.widgetSubtitle {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.widgetAside {
+  text-align: right;
+}
+
+.widgetAsideLabel {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.widgetAsideMeta {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.widgetLink {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.netWorthValue {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.valueStrong {
+  color: var(--text);
+}
+
+.debtValue {
+  color: var(--danger);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.metricTile {
+  --tile-tone: var(--accent);
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--tile-tone) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tile-tone) 26%, var(--border));
+}
+
+.metricTileCash {
+  --tile-tone: #22c55e;
+}
+
+.metricTileSavings {
+  --tile-tone: #10b981;
+}
+
+.metricTileInvestments {
+  --tile-tone: #6366f1;
+}
+
+.metricTileCredit {
+  --tile-tone: #ef4444;
+}
+
+.metricTileLoans {
+  --tile-tone: #f97316;
+}
+
+.metricTileAccounts {
+  --tile-tone: #3b82f6;
+}
+
+.metricTileSpend {
+  --tile-tone: #f59e0b;
+}
+
+.metricTileRunway {
+  --tile-tone: #3b82f6;
+}
+
+.metricTile span {
+  display: block;
+  color: color-mix(in srgb, var(--tile-tone) 78%, var(--text-muted));
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.metricTile strong,
+.metricTile small {
+  display: block;
+}
+
+.metricTile strong {
+  margin-top: 0.2rem;
+  font-size: 1rem;
+}
+
+.metricTile small {
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.cashflowGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.cashflowTile {
+  --tile-tone: #f59e0b;
+  padding: 1rem;
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--tile-tone) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tile-tone) 26%, var(--border));
+}
+
+.cashflowTile span {
+  display: block;
+  color: color-mix(in srgb, var(--tile-tone) 78%, var(--text-muted));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cashflowTile strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.cashflowIncome {
+  --tile-tone: #10b981;
+}
+
+.scrollList {
+  display: grid;
+  gap: 0.55rem;
+  padding-right: 0.15rem;
+}
+
+.accountRow,
+.transactionRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+}
+
+.accountTitleRow,
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.accountName,
+.transactionName {
+  margin: 0;
+  font-weight: 600;
+}
+
+.accountMeta,
+.transactionMeta {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.accountAmounts {
+  text-align: right;
+}
+
+.dimmed {
+  opacity: 0.62;
+}
+
+.strike {
+  text-decoration: line-through;
+}
+
+.badgeDanger,
+.badgeMuted {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badgeDanger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badgeMuted {
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--text-muted);
+}
+
+.transactionAmount {
+  white-space: nowrap;
+}
+
+.incomeAmount {
+  color: var(--success);
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text);
+  background: color-mix(in srgb, var(--tag-color) 18%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tag-color) 35%, var(--border));
+}
+
+.chartWrap {
+  min-height: 240px;
+}
+
+.chartWrap :global(.apexcharts-datalabel-label) {
+  fill: var(--text-muted);
+}
+
+.chartWrap :global(.apexcharts-datalabel-value) {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+.actionStack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  font-weight: 600;
+}
+
+.primaryAction {
+  background: var(--accent);
+  color: #fff;
+}
+
+.primaryAction:hover {
+  background: var(--accent-hover);
+}
+
+.secondaryAction {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.emptyState {
+  margin: 0;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.widgetToolbar {
+  position: absolute;
+  top: -0.55rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.toolbarLabel {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconButton {
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.iconButton:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.iconButton:active {
+  cursor: grabbing;
+}
+
+.widgetPreview {
+  height: auto;
+}
+
+.widgetHiddenPreview {
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+.loadingState {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+  .cashflowGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metricGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .span2 {
+    grid-column: span 2;
+  }
+
+  .gridItem {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(var(--widget-min-rows, 2) * 6.5rem);
+    max-height: calc(var(--widget-max-rows, 3) * 9.5rem);
+  }
+
+  .widgetPreview {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .widget {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .scrollList {
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .span2 {
+    grid-column: span 2;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

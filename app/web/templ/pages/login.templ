@@ -1,0 +1,62 @@
+package pages
+
+import (
+    "FinancialTracker/web/templ/layouts"
+    "FinancialTracker/web/templ/components"
+    "FinancialTracker/internal/models"
+)
+
+templ Login(data *models.PageData) {
+    @layouts.Base(data) {
+        <div class="max-w-md mx-auto mt-16 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
+                <p class="text-gray-600 dark:text-gray-400">Sign in to manage your finances</p>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- SSO Buttons -->
+                <a href="/auth/google" class="flex items-center justify-center w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 mr-3" alt="Google" />
+                    <span class="font-semibold text-gray-700 dark:text-gray-200">Continue with Google</span>
+                </a>
+            </div>
+            
+            <div class="relative my-8">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or email</span>
+                </div>
+            </div>
+            
+            <form hx-post="/auth/login" hx-target-4xx="#error-message" hx-target-5xx="#error-message" hx-swap="outerHTML" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                    <input type="email" id="email" name="email" required class="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                </div>
+                @components.PasswordInput(components.PasswordInputProps{
+                    Label: "Password",
+                    Name: "password",
+                    ID: "password",
+                    Required: true,
+                })
+                
+                @components.ErrorMessage("")
+
+                <div class="flex items-center mt-4">
+                    <input type="checkbox" id="remember" name="remember" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded" />
+                    <label for="remember" class="ml-3 block text-sm text-gray-900 dark:text-gray-300">Remember me</label>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    Sign In
+                </button>
+            </form>
+            
+            <p class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                Don't have an account? <a href="/register" class="text-blue-600 dark:text-blue-400 hover:underline">Create one</a>
+            </p>
+        </div>
+    }
+}

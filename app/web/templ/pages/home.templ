@@ -1,0 +1,19 @@
+package pages
+
+import (
+    "FinancialTracker/web/templ/layouts"
+    "FinancialTracker/internal/models"
+)
+
+templ Home(data *models.PageData) {
+    @layouts.Base(data) {
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl font-extrabold mb-4 text-gray-900 dark:text-white">Master Your Finances</h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">Fast, secure, and intuitive expense tracking with Plaid integration.</p>
+            <div class="flex justify-center space-x-4">
+                <a href="/dashboard" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">Go to Dashboard</a>
+                <button class="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-gray-700">Learn More</button>
+            </div>
+        </div>
+    }
+}

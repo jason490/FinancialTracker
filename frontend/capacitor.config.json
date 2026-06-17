@@ -1,0 +1,5 @@
+{
+  "appId": "com.financialtracker.app",
+  "appName": "Financial Tracker",
+  "webDir": ".output/public"
+}

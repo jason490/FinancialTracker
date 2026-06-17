@@ -1,0 +1,39 @@
+{
+    # Global options
+    admin off
+}
+
+# Respond to both localhost and the local DNS name
+http://localhost, http://laptop-server.home.arpa {
+    # Route API requests to the Go backend
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /api {
+        reverse_proxy backend:8080
+    }
+
+    # Route legacy static files
+    handle /static/* {
+        reverse_proxy backend:8080
+    }
+
+    # Route Vite dev modules and built assets to the SolidStart server
+    handle /_build/* {
+        reverse_proxy frontend:3000
+    }
+
+    # Route everything else to the SolidStart frontend
+    handle {
+        reverse_proxy frontend:3000
+    }
+
+    # Enable compression
+    encode gzip
+    
+    # Logging
+    log {
+        output stdout
+    }
+}

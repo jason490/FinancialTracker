@@ -1,0 +1,319 @@
+package pages
+
+import (
+    "FinancialTracker/web/templ/layouts"
+    "FinancialTracker/web/templ/components"
+    "FinancialTracker/web/templ/components/settings"
+    "FinancialTracker/internal/models"
+
+)
+
+templ Settings(data *models.PageData) {
+    @layouts.Base(data) {
+        <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-4 sm:p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h1 class="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900 dark:text-white">Settings</h1>
+            
+            <div class="space-y-8 sm:space-y-12">
+                <section>
+                    <h2 class="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 border-b dark:border-gray-700 pb-2 text-gray-900 dark:text-white">Account</h2>
+                    
+                    <!-- Profile Info -->
+                    <form hx-post="/settings/account" hx-target="#account-status" hx-target-4xx="#account-status" hx-target-5xx="#account-status" hx-confirm="Are you sure you want to update your profile?" class="space-y-4 mb-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">First Name</label>
+                                <input type="text" name="first_name" value={ data.User.FirstName } required class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Last Name</label>
+                                <input type="text" name="last_name" value={ data.User.LastName } required class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                            <input type="email" name="email" value={ data.User.Email } required class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+                        </div>
+                        <div id="account-status"></div>
+                        <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                            Update Profile
+                        </button>
+                    </form>
+
+                    <!-- Login Methods -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Login Methods</h3>
+                        
+                        <!-- Password Section -->
+                        <div class="p-4 border dark:border-gray-700 rounded-xl space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div>
+                                    <p class="font-semibold text-gray-900 dark:text-white">Password Login</p>
+                                    if data.User.PasswordHash != "" {
+                                        <p class="text-xs text-green-500">Enabled</p>
+                                    } else {
+                                        <p class="text-xs text-gray-500">Not set</p>
+                                    }
+                                </div>
+                                <button onclick="document.getElementById('password-form').classList.toggle('hidden')" class="text-blue-600 text-sm font-medium hover:underline whitespace-nowrap">
+                                    if data.User.PasswordHash != "" {
+                                        Change Password
+                                    } else {
+                                        Add Password
+                                    }
+                                </button>
+                            </div>
+
+                            <form id="password-form" hx-post="/settings/password" hx-target="#password-status" hx-target-4xx="#password-status" hx-target-5xx="#password-status" hx-confirm="This will log you out on all of your devices. Are you sure you want to change your password?" class="hidden space-y-4 pt-4 border-t dark:border-gray-700">
+                                if data.User.PasswordHash != "" {
+                                    @components.PasswordInput(components.PasswordInputProps{
+                                        Label: "Current Password",
+                                        ID: "current_password",
+                                        Name: "current_password",
+                                    })
+                                }
+                                @components.PasswordInput(components.PasswordInputProps{
+                                    Label: "New Password",
+                                    ID: "new_password",
+                                    Name: "new_password",
+                                    Required: true,
+                                })
+                                @components.PasswordInput(components.PasswordInputProps{
+                                    Label: "Confirm New Password",
+                                    ID: "confirm_password",
+                                    Name: "confirm_password",
+                                    Required: true,
+                                })
+                                <div id="password-status"></div>
+                                <button type="submit"  class="w-full sm:w-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-lg text-sm font-bold">
+                                    Save Password
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- SSO Section -->
+                        <div class="space-y-3">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Connected Accounts</p>
+                            
+                            <!-- Google -->
+                            <div class="flex justify-between items-center p-4 border dark:border-gray-700 rounded-xl">
+                                <div class="flex items-center">
+                                    <img src="/static/img/google.svg" class="w-5 h-5 mr-3" alt="Google" />
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white">Google</p>
+                                        if hasSSO(data, "google") {
+                                            <p class="text-xs text-green-500">Connected</p>
+                                        } else {
+                                            <p class="text-xs text-gray-500">Not connected</p>
+                                        }
+                                    </div>
+                                </div>
+                                if hasSSO(data, "google") {
+                                    <button hx-post="/settings/unlink/google" hx-swap="none" hx-confirm="Are you sure you want to unlink Google?" class="text-red-500 text-sm font-medium hover:underline">Unlink</button>
+                                } else {
+                                    <a href="/auth/google?action=link" class="text-blue-600 text-sm font-medium hover:underline">Link Account</a>
+                                }
+                            </div>
+
+                            <!-- Apple -->
+                            <div class="flex justify-between items-center p-4 border dark:border-gray-700 rounded-xl">
+                                <div class="flex items-center">
+                                    <img src="/static/img/apple.svg" class="w-5 h-5 mr-3" alt="Apple" />
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white">Apple</p>
+                                        if hasSSO(data, "apple") {
+                                            <p class="text-xs text-green-500">Connected</p>
+                                        } else {
+                                            <p class="text-xs text-gray-500">Not connected</p>
+                                        }
+                                    </div>
+                                </div>
+                                if hasSSO(data, "apple") {
+                                    <button hx-post="/settings/unlink/apple" hx-swap="none" hx-confirm="Are you sure you want to unlink Apple?" class="text-red-500 text-sm font-medium hover:underline">Unlink</button>
+                                } else {
+                                    <a href="/auth/apple?action=link" class="text-blue-600 text-sm font-medium hover:underline">Link Account</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="delete-account-area" class="mt-12 pt-8 border-t dark:border-gray-700">
+                        @DeleteAccountButton()
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 border-b dark:border-gray-700 pb-2 text-gray-900 dark:text-white">Bank Accounts</h2>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">Connect your bank accounts to automatically sync your transactions.</p>
+                    
+                    @settings.BankAccountList(data)
+		            <div id="bank-status" class="mb-4"></div>
+		            <button
+		            	hx-post="/plaid/create-link-token"
+		            	hx-target="#bank-status"
+		            	hx-target-4xx="#bank-status"
+		            	hx-target-5xx="#bank-status"
+		            	class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+		            >
+		            	<span>Connect Bank Account</span>
+		            </button>
+                </section>
+
+                <section>
+                    <h2 class="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 border-b dark:border-gray-700 pb-2 text-gray-900 dark:text-white">Appearance</h2>
+                    <div class="space-y-4">
+                        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">Customize how Financial Tracker looks on your device.</p>
+                        
+                        <form hx-post="/settings/theme" hx-target="#theme-status" hx-target-4xx="#theme-status" hx-target-5xx="#theme-status" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="theme" value="light" class="peer sr-only" checked?={ data.User.ThemePreference == "light" } />
+                                    <div class="p-3 sm:p-4 border dark:border-gray-600 rounded-lg text-center text-sm sm:text-base text-gray-700 dark:text-gray-300 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                                        Light
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="theme" value="dark" class="peer sr-only" checked?={ data.User.ThemePreference == "dark" } />
+                                    <div class="p-3 sm:p-4 border dark:border-gray-600 rounded-lg text-center text-sm sm:text-base text-gray-700 dark:text-gray-300 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                                        Dark
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="theme" value="system" class="peer sr-only" checked?={ data.User.ThemePreference == "system" } />
+                                    <div class="p-3 sm:p-4 border dark:border-gray-600 rounded-lg text-center text-sm sm:text-base text-gray-700 dark:text-gray-300 peer-checked:border-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                                        System
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div id="theme-status" class="h-5 text-center"></div>
+                            
+                            <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                                Save Preference
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        if data.ReauthSuccess {
+            <div hx-get="/settings/delete/check-reauth?reauth_success=true" hx-trigger="load" hx-target="#delete-account-area" hx-swap="innerHTML"></div>
+        }
+        
+        <script>
+            document.body.addEventListener('themeUpdated', function() {
+                const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+                if (typeof applyTheme === 'function') {
+                    applyTheme(selectedTheme);
+                }
+            });
+
+            document.body.addEventListener('profileUpdated', function() {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            });
+
+            // Plaid Link Handler
+            document.body.addEventListener('openPlaid', function(evt) {
+                const detail = evt.detail;
+                const token = typeof detail === 'string' ? detail : detail.token;
+                const handler = Plaid.create({
+                    token: token,
+                    onSuccess: (public_token, metadata) => {
+                        htmx.ajax('POST', '/plaid/exchange', {
+                            values: { public_token: public_token },
+                            target: '#bank-status',
+                            swap: 'innerHTML'
+                        });
+                    },
+                    onExit: (err, metadata) => {
+                        htmx.trigger('body', 'updateBankList');
+                        if (err != null) {
+                            console.error('Plaid Link Error:', err);
+                        }
+                    },
+                });
+                handler.open();
+            });
+        </script>
+        <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+    }
+}
+
+func hasSSO(data *models.PageData, provider string) bool {
+    for _, sso := range data.User.SSOs {
+        if sso.Provider == provider {
+            return true
+        }
+    }
+    return false
+}
+
+templ DeleteAccountButton() {
+    <button hx-get="/settings/delete/init" hx-target="#delete-account-area" hx-swap="innerHTML" class="bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/30 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors">
+        Delete Account
+    </button>
+}
+
+templ DeleteAccountReAuth(data *models.PageData) {
+    <div class="bg-red-50 dark:bg-red-900/10 p-6 rounded-xl border border-red-200 dark:border-red-900/30 space-y-4">
+        <h3 class="text-lg font-bold text-red-700 dark:text-red-400">Re-authentication Required</h3>
+        <p class="text-sm text-red-600 dark:text-red-300">To delete your account, please verify your identity.</p>
+        
+        <div class="space-y-4">
+            if data.User.PasswordHash != "" {
+                <form hx-post="/settings/delete/verify" hx-target="#delete-account-area" hx-target-4xx="#reauth-error" hx-target-5xx="#reauth-error" hx-swap="innerHTML" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Confirm Email</label>
+                        <input type="email" name="email" required class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg" />
+                    </div>
+
+                    @components.PasswordInput(components.PasswordInputProps{
+                        Label: "Password",
+                        Name: "current_password",
+                        Required: true,
+                    })
+                    <div id="reauth-error"></div>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700">Verify with Password</button>
+                </form>
+            }
+
+            if len(data.User.SSOs) > 0 {
+                if data.User.PasswordHash != "" {
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center"><span class="w-full border-t dark:border-gray-700"></span></div>
+                        <div class="relative flex justify-center text-xs uppercase"><span class="bg-red-50 dark:bg-gray-800 px-2 text-gray-500">Or use SSO</span></div>
+                    </div>
+                }
+
+                <div class="flex flex-col space-y-2">
+                    for _, sso := range data.User.SSOs {
+                        <a href={ templ.URL("/auth/" + sso.Provider + "?reauth=delete") } class="inline-flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <img src={ "/static/img/" + sso.Provider + ".svg" } class="w-4 h-4 mr-2" alt="" />
+                            Verify with { sso.Provider }
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+        
+        <button hx-get="/settings/delete/cancel" hx-target="#delete-account-area" hx-swap="innerHTML" class="text-xs text-gray-500 hover:underline">Cancel</button>
+    </div>
+}
+
+templ DeleteAccountConfirm() {
+    <div class="bg-red-600 p-6 rounded-xl text-white space-y-4 shadow-xl animate-pulse">
+        <h3 class="text-xl font-black uppercase tracking-widest">Permanent Action</h3>
+        <p class="font-bold">Are you absolutely sure? This will delete all your financial data, accounts, and history. This cannot be undone.</p>
+        
+        <div class="flex space-x-4">
+            <button hx-post="/settings/delete/confirm" hx-target="body" hx-push-url="true" class="bg-white text-red-600 px-6 py-3 rounded-lg font-black hover:bg-red-50 transition-all shadow-lg">
+                YES, DELETE EVERYTHING
+            </button>
+            <button hx-get="/settings/delete/cancel" hx-target="#delete-account-area" hx-swap="innerHTML" class="bg-red-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800">
+                Cancel
+            </button>
+        </div>
+    </div>
+}

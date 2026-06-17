@@ -1,0 +1,807 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+  animation: rise 0.55s ease both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.6rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 38rem;
+}
+
+.layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.tabRail {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
+}
+
+.tabRail::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .tabRail {
+    flex-direction: column;
+    overflow: visible;
+    position: sticky;
+    top: 5.5rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: var(--shadow);
+  }
+}
+
+.tabButton {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+  border-radius: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.tabButton:hover {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.tabButtonActive {
+  color: var(--text);
+  background: var(--surface-elevated);
+  border-color: var(--border);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), var(--surface)),
+    var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.panelInner {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1.1rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 1.5rem;
+}
+
+.tabPanel {
+  animation: panelIn 0.28s ease both;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.sectionHint {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  display: grid;
+  gap: 1rem;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .fieldGrid.twoCol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.input,
+.select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+  padding: 0.8rem 0.95rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.inputReadonly {
+  opacity: 0.8;
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.buttonPrimary,
+.buttonSecondary,
+.buttonDanger,
+.buttonGhost {
+  appearance: none;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1.1rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.buttonPrimary {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.buttonPrimary:hover {
+  background: var(--accent-hover);
+}
+
+.buttonSecondary {
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text);
+}
+
+.buttonSecondary:hover {
+  border-color: var(--accent);
+}
+
+.buttonDanger {
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.buttonDanger:hover {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+.buttonGhost {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  padding-inline: 0.35rem;
+}
+
+.buttonGhost:hover {
+  color: var(--accent-hover);
+}
+
+.buttonPrimary:disabled,
+.buttonSecondary:disabled,
+.buttonDanger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.statusOk,
+.statusError,
+.statusInfo {
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.95rem;
+  font-size: 0.92rem;
+}
+
+.statusOk {
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.statusError {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.statusInfo {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text);
+}
+
+.ssoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ssoIdentity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ssoIcon {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.badgeOk {
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.badgeMuted {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+}
+
+.badgeWarn {
+  background: color-mix(in srgb, #d97706 14%, transparent);
+  color: #d97706;
+}
+
+.badgeDanger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.themeGrid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+}
+
+.themeOption {
+  position: relative;
+}
+
+.themeInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.themeCard {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.9rem 0.75rem 0.8rem;
+  text-align: center;
+  cursor: pointer;
+  min-height: 100%;
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  background: var(--surface-elevated);
+}
+
+.themeInput:checked + .themeCard {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+.themeSwatch {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, #000 20%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.themeLabel {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.themeDescription {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.callout {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, #d97706 30%, var(--border));
+  background: color-mix(in srgb, #d97706 8%, var(--surface));
+}
+
+.calloutTitle {
+  margin: 0;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.calloutList {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.connectionList {
+  display: grid;
+  gap: 1rem;
+}
+
+.connectionCard {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.connectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-accent) 55%, transparent);
+}
+
+.institutionMark {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  flex-shrink: 0;
+}
+
+.connectionMeta {
+  display: flex;
+  gap: 0.85rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.connectionTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.connectionName {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.connectionSub {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.connectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.accountList {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+}
+
+.accountRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+}
+
+.accountRowMuted {
+  opacity: 0.72;
+}
+
+.accountName {
+  margin: 0;
+  font-weight: 600;
+}
+
+.accountMeta {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.accountBalance {
+  font-weight: 700;
+}
+
+.accountActions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.iconButton {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.iconButton:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  border: 2px dashed var(--border);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.emptyCopy {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 28rem;
+}
+
+.collapsedForm {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.hidden {
+  display: none;
+}
+
+.dangerZone {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--danger) 22%, var(--border));
+}
+
+.dangerIntro {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dangerCard {
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--border));
+  border-radius: 1rem;
+  padding: 1rem;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--danger) 7%, var(--surface)),
+      color-mix(in srgb, var(--surface) 92%, transparent)
+    ),
+    var(--surface);
+  display: grid;
+  gap: 1rem;
+  animation: rise 0.35s ease both;
+}
+
+.dangerCardFinal {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--danger) 16%, transparent), transparent 55%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--danger) 12%, var(--surface-elevated)),
+      color-mix(in srgb, var(--danger) 4%, var(--surface))
+    );
+}
+
+.dangerCopy {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.dangerBanner {
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+.dangerBannerTitle {
+  margin: 0;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.dangerBannerCopy {
+  margin: 0.35rem 0 0;
+  color: color-mix(in srgb, var(--danger) 72%, var(--text));
+  font-size: 0.92rem;
+}
+
+.dangerFinalHeader {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dangerFinalEyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.dangerFinalTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.buttonDangerSolid {
+  appearance: none;
+  border: none;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.75rem 1.1rem;
+  cursor: pointer;
+  background: var(--danger);
+  color: #fff;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.buttonDangerSolid:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 88%, #000);
+}
+
+.buttonDangerSolid:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.divider::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.divider span {
+  position: relative;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 0 0.65rem;
+}
+
+.ssoVerifyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.ssoVerifyButton:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface-elevated));
+}
+
+.cancelLink {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  justify-self: start;
+  padding: 0;
+}
+
+.cancelLink:hover {
+  color: var(--text);
+  text-decoration: underline;
+}

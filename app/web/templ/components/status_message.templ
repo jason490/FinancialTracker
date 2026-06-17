@@ -1,0 +1,9 @@
+package components
+
+templ StatusMessage(message string, isError bool) {
+    if isError {
+        <span class="text-red-600 dark:text-red-400">{ message }</span>
+    } else {
+        <span class="text-green-600 dark:text-green-400">{ message }</span>
+    }
+}

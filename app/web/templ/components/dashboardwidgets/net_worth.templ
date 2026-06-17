@@ -1,0 +1,44 @@
+package dashboardwidgets
+
+import (
+	"FinancialTracker/internal/models"
+	"FinancialTracker/internal/utils"
+)
+
+templ NetWorthWidget(data *models.DashboardData) {
+	<div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+		<h2 class="text-lg sm:text-xl font-bold mb-4 text-gray-900 dark:text-white">Net Worth</h2>
+		<p class={ "text-3xl sm:text-4xl font-bold mb-4", templ.KV("text-red-600 dark:text-red-400", data.Summary.NetWorth < 0), templ.KV("text-gray-900 dark:text-white", data.Summary.NetWorth >= 0) }>
+			{ utils.FormatNetWorth(data.Summary.NetWorth) }
+		</p>
+		<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-sm">
+			<div class="p-2 sm:p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+				<span class="text-green-600 dark:text-green-400 block text-xs font-medium">Cash</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatCurrency(data.Summary.Cash) }</span>
+			</div>
+			<div class="p-2 sm:p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+				<span class="text-emerald-600 dark:text-emerald-400 block text-xs font-medium">Savings</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatCurrency(data.Summary.Savings) }</span>
+			</div>
+			<div class="p-2 sm:p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+				<span class="text-indigo-600 dark:text-indigo-400 block text-xs font-medium">Investments</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatCurrency(data.Summary.Investments) }</span>
+			</div>
+			<div class="p-2 sm:p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+				<span class="text-red-600 dark:text-red-400 block text-xs font-medium">Credit debt</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatCurrency(data.Summary.CreditDebt) }</span>
+			</div>
+			<div class="p-2 sm:p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20">
+				<span class="text-orange-600 dark:text-orange-400 block text-xs font-medium">Loans</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatCurrency(data.Summary.LoanDebt) }</span>
+				if data.Summary.LoanMonthlyPayments > 0 {
+					<span class="text-orange-600/80 dark:text-orange-400/80 block text-xs mt-0.5">{ utils.FormatCurrency(data.Summary.LoanMonthlyPayments) }/mo</span>
+				}
+			</div>
+			<div class="p-2 sm:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+				<span class="text-blue-600 dark:text-blue-400 block text-xs font-medium">Accounts</span>
+				<span class="font-semibold text-gray-900 dark:text-white">{ utils.FormatInt(data.Summary.AccountCount) }</span>
+			</div>
+		</div>
+	</div>
+}

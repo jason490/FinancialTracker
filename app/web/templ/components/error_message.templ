@@ -1,0 +1,11 @@
+package components
+
+templ ErrorMessage(message string) {
+    if message != "" {
+        <div id="error-message" class="text-red-600 text-sm mt-2 text-center">
+            { message }
+        </div>
+    } else {
+        <div id="error-message" class="text-red-600 text-sm mt-2 text-center"></div>
+    }
+}

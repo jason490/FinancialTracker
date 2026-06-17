@@ -1,0 +1,20 @@
+package dashboardwidgets
+
+import (
+	"FinancialTracker/internal/models"
+	"FinancialTracker/web/templ/components"
+)
+
+templ RecentTransactionsWidget(data *models.DashboardData) {
+	<div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+		<div class="flex justify-between items-center mb-4 gap-2">
+			<h2 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Recent Transactions</h2>
+			<a href="/transactions" class="text-sm text-blue-600 dark:text-blue-400 hover:underline shrink-0">View All</a>
+		</div>
+		if len(data.Transactions) > 0 {
+			@components.TransactionList(data.Transactions)
+		} else {
+			<p class="text-gray-500 text-center py-4">No transactions found.</p>
+		}
+	</div>
+}

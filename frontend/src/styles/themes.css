@@ -1,0 +1,181 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap");
+
+:root,
+[data-theme="light"] {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+
+  --bg: #f4f6f8;
+  --bg-accent: #e8f4f2;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --text: #15202b;
+  --text-muted: #5c6b7a;
+  --border: #d8e0e8;
+  --accent: #0b7a6e;
+  --accent-hover: #096158;
+  --accent-soft: rgba(11, 122, 110, 0.12);
+  --danger: #c0392b;
+  --danger-soft: rgba(192, 57, 43, 0.1);
+  --success: #1f8a5b;
+  --shadow: 0 18px 50px rgba(21, 32, 43, 0.08);
+  --grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] {
+  --bg: #11161d;
+  --bg-accent: #15242a;
+  --surface: #1a222c;
+  --surface-elevated: #212b37;
+  --text: #edf2f7;
+  --text-muted: #9aa8b6;
+  --border: #2d3a47;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-soft: rgba(45, 212, 191, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --success: #4ade80;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="tokyo-night"] {
+  --bg: #1a1b26;
+  --bg-accent: #1f2335;
+  --surface: #24283b;
+  --surface-elevated: #2f3549;
+  --text: #c0caf5;
+  --text-muted: #9aa5ce;
+  --border: #3b4261;
+  --accent: #7aa2f7;
+  --accent-hover: #9eceff;
+  --accent-soft: rgba(122, 162, 247, 0.16);
+  --danger: #f7768e;
+  --danger-soft: rgba(247, 118, 142, 0.14);
+  --success: #9ece6a;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="coffee"] {
+  --bg: #f3ece4;
+  --bg-accent: #e8ddd0;
+  --surface: #fffaf4;
+  --surface-elevated: #fffdf9;
+  --text: #3b2f2f;
+  --text-muted: #7a6558;
+  --border: #d9c8b8;
+  --accent: #8b5e3c;
+  --accent-hover: #6f4a2f;
+  --accent-soft: rgba(139, 94, 60, 0.14);
+  --danger: #b4533c;
+  --danger-soft: rgba(180, 83, 60, 0.12);
+  --success: #5f7a4a;
+  --shadow: 0 18px 50px rgba(59, 47, 47, 0.1);
+}
+
+[data-theme="forest"] {
+  --bg: #0f1a14;
+  --bg-accent: #15261c;
+  --surface: #17251d;
+  --surface-elevated: #1d2f24;
+  --text: #e4f2e8;
+  --text-muted: #8fae9a;
+  --border: #2a4034;
+  --accent: #6fcf97;
+  --accent-hover: #95e0b3;
+  --accent-soft: rgba(111, 207, 151, 0.16);
+  --danger: #f08a7e;
+  --danger-soft: rgba(240, 138, 126, 0.14);
+  --success: #8fd694;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.38);
+}
+
+[data-theme="rose"] {
+  --bg: #1c1218;
+  --bg-accent: #261720;
+  --surface: #24141d;
+  --surface-elevated: #2f1a27;
+  --text: #f7e8ee;
+  --text-muted: #c7a0b0;
+  --border: #4a2f3d;
+  --accent: #e8a0b4;
+  --accent-hover: #f2bdd0;
+  --accent-soft: rgba(232, 160, 180, 0.16);
+  --danger: #ff8f9d;
+  --danger-soft: rgba(255, 143, 157, 0.14);
+  --success: #9fd9a6;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="midnight"] {
+  --bg: #0d1025;
+  --bg-accent: #121735;
+  --surface: #141a33;
+  --surface-elevated: #1a2240;
+  --text: #e7ebff;
+  --text-muted: #9aa6d1;
+  --border: #2a3560;
+  --accent: #8b9cff;
+  --accent-hover: #b0bcff;
+  --accent-soft: rgba(139, 156, 255, 0.16);
+  --danger: #ff8da1;
+  --danger-soft: rgba(255, 141, 161, 0.14);
+  --success: #7fd8a4;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="parchment"] {
+  --bg: #f7f0e3;
+  --bg-accent: #efe2cf;
+  --surface: #fff8ee;
+  --surface-elevated: #fffdf8;
+  --text: #3a2f24;
+  --text-muted: #7d6a57;
+  --border: #ddc8ae;
+  --accent: #a67c52;
+  --accent-hover: #8a6340;
+  --accent-soft: rgba(166, 124, 82, 0.14);
+  --danger: #b4533c;
+  --danger-soft: rgba(180, 83, 60, 0.12);
+  --success: #5f7a4a;
+  --shadow: 0 18px 50px rgba(58, 47, 36, 0.1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+}

@@ -1,0 +1,373 @@
+package pages
+
+import (
+    "FinancialTracker/web/templ/layouts"
+    "FinancialTracker/web/templ/components"
+    "FinancialTracker/internal/models"
+    "fmt"
+)
+
+templ Tags(data *models.PageData) {
+    @layouts.Base(data) {
+        <div class="space-y-6" x-data="{ 
+            draggedTagId: null,
+            editingTag: null,
+            editingCategory: null,
+            showMergeModal: false,
+            showDeleteCategoryModal: null,
+            filters: [],
+            selectedColor: 'blue',
+            apply: false
+        }"
+        @update-tag-list.window="
+            htmx.ajax('GET', '/tags/list', { target: '#category-grid', swap: 'innerHTML' });
+            editingTag = null;
+            showDeleteCategoryModal = null;
+            showMergeModal = false;
+            if (document.getElementById('modal-category')) document.getElementById('modal-category').classList.add('hidden');
+        "
+        >
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tags & Categories</h1>
+                <div class="flex flex-col min-[400px]:flex-row items-center gap-2 w-full sm:w-auto">
+                    <button 
+                        @click="showMergeModal = true"
+                        class="w-full min-[400px]:w-auto min-[400px]:flex-1 sm:flex-none justify-center bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span class="whitespace-nowrap">Merge Categories</span>
+                    </button>
+                    <button 
+                        @click="document.getElementById('modal-category').classList.remove('hidden')"
+                        class="w-full min-[400px]:w-auto min-[400px]:flex-1 sm:flex-none justify-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span class="whitespace-nowrap">New Category</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="category-grid" hx-get="/tags/list" hx-trigger="updateTagList from:body">
+                if cats, ok := data.Data.([]models.CategoryWithTags); ok {
+                    @CategoryGrid(cats)
+                }
+            </div>
+
+            <!-- Modal for editing tag (multi-filter) -->
+            <div x-show="editingTag" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-cloak>
+                <template x-if="editingTag">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold dark:text-white">Edit Tag: <span x-text="editingTag?.name"></span></h3>
+                            <button @click="editingTag = null" class="text-gray-500 hover:text-gray-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <form 
+                            @submit.prevent="htmx.ajax('PUT', '/tags/' + editingTag.id, { source: $el, target: '#edit-tag-error', swap: 'innerHTML' })"
+                            hx-target-4xx="#edit-tag-error"
+                            hx-target-5xx="#edit-tag-error"
+                        >
+                            <div id="edit-tag-error" class="mb-4 text-center"></div>
+                            <input type="hidden" name="apply" :value="apply" />
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag Name</label>
+                                <input type="text" name="name" :value="editingTag?.name" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required />
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                <select name="category_id" x-model="editingTag.category_id" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required>
+                                    if cats, ok := data.Data.([]models.CategoryWithTags); ok {
+                                        for _, cat := range cats {
+                                            <option value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            @components.TagColorPicker("color", "")
+
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-tagging Filters</label>
+                                    <button type="button" @click="if (!filters) { filters = [] }; filters.push({ pattern: '', filter_type: 'string' })" class="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Add Filter
+                                    </button>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <template x-if="filters">
+                                        <template x-for="(filter, index) in filters" :key="index">
+                                            <div class="flex items-start sm:items-center space-x-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                                                <div class="flex-1 flex flex-col sm:flex-row gap-2">
+                                                    <select name="filter_type[]" x-model="filter.filter_type" class="w-full sm:w-auto px-2 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-white outline-none">
+                                                        <option value="string">String Match</option>
+                                                        <option value="regex">Regex</option>
+                                                        <option value="amount_greater">Amount &gt;</option>
+                                                        <option value="amount_less">Amount &lt;</option>
+                                                        <option value="amount_equal">Amount =</option>
+                                                    </select>
+                                                    <input type="text" name="filter_pattern[]" x-model="filter.pattern" placeholder="Pattern or value" class="flex-1 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-white outline-none" required />
+                                                </div>
+                                                <button type="button" @click="filters.splice(index, 1)" class="text-red-500 hover:text-red-700 p-1 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <div x-show="!filters || filters.length === 0" class="text-center py-4 text-gray-500 text-sm border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-lg">
+                                        No filters defined for this tag.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-10">
+                                <button type="button" @click="editingTag = null" class="order-3 sm:order-1 px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors font-medium">Cancel</button>
+                                <button type="submit" @click="apply = false" class="order-2 sm:order-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium">Save Tag</button>
+                                <button type="submit" @click="apply = true" class="order-1 sm:order-3 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center space-x-2 font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    <span>Save & Apply</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Modal for deleting category with options -->
+            <template x-if="showDeleteCategoryModal">
+                <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md">
+                        <h3 class="text-xl font-bold mb-4 dark:text-white">Delete Category</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">What would you like to do with the tags in this category?</p>
+                        <form 
+                            @submit.prevent="htmx.ajax('DELETE', '/categories/' + showDeleteCategoryModal, { source: $el, target: '#delete-category-error', swap: 'innerHTML' })"
+                            hx-target-4xx="#delete-category-error"
+                            hx-target-5xx="#delete-category-error"
+                        >
+                            <div id="delete-category-error" class="mb-4 text-center"></div>
+                            <div class="space-y-3 mb-6">
+                                <label class="flex items-center space-x-3 p-3 border border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <input type="radio" name="action" value="move_to_misc" checked class="text-blue-600 focus:ring-blue-500" />
+                                    <span class="text-gray-700 dark:text-gray-300">Move tags to "Misc" category</span>
+                                </label>
+                                <label class="flex items-center space-x-3 p-3 border border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50" x-data="{ open: false }">
+                                    <input type="radio" name="action" value="move_to" @change="open = $el.checked" class="text-blue-600 focus:ring-blue-500" />
+                                    <div class="flex-1">
+                                        <span class="text-gray-700 dark:text-gray-300">Move tags to:</span>
+                                        <select x-show="open" name="target_category_id" hx-get="/categories/options?alpine=true" hx-trigger="updateTagList from:body" hx-swap="innerHTML" class="mt-2 w-full px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-white">
+                                            if cats, ok := data.Data.([]models.CategoryWithTags); ok {
+                                                for _, otherCat := range cats {
+                                                    <option :disabled={ fmt.Sprintf("showDeleteCategoryModal == %d", otherCat.ID) } value={ fmt.Sprint(otherCat.ID) }>{ otherCat.Name }</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-3 p-3 border border-red-100 dark:border-red-900/30 rounded-lg cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/10">
+                                    <input type="radio" name="action" value="delete_all" class="text-red-600 focus:ring-red-500" />
+                                    <span class="text-red-700 dark:text-red-400">Delete all tags in this category</span>
+                                </label>
+                            </div>
+                            <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-10">
+                                <button type="button" @click="showDeleteCategoryModal = null" class="order-2 sm:order-1 px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors font-medium">Cancel</button>
+                                <button type="submit" class="order-1 sm:order-2 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-all font-medium">Confirm Delete</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Modal for merging categories -->
+            <div x-show="showMergeModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-cloak>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">Merge Categories</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">All tags from the source will be moved to the target category, and the source will be deleted.</p>
+                    <form hx-post="/categories/merge" hx-target-4xx="#merge-category-error" hx-target-5xx="#merge-category-error" hx-swap="innerHTML">
+                        <div id="merge-category-error" class="mb-4 text-center"></div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source Category</label>
+                            <select name="source_id" x-ref="sourceSelect" hx-get="/categories/options" hx-trigger="updateTagList from:body" hx-swap="innerHTML" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required>
+                                if cats, ok := data.Data.([]models.CategoryWithTags); ok {
+                                    for _, cat := range cats {
+                                        <option value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Category</label>
+                            <select name="target_id" hx-get="/categories/options" hx-trigger="updateTagList from:body" hx-swap="innerHTML" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required>
+                                if cats, ok := data.Data.([]models.CategoryWithTags); ok {
+                                    for _, cat := range cats {
+                                        <option value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-10">
+                            <button type="button" @click="showMergeModal = false" class="order-2 sm:order-1 px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors font-medium">Cancel</button>
+                            <button type="submit" class="order-1 sm:order-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium">Merge</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal for new category -->
+            <div id="modal-category" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">New Category</h3>
+                    <form hx-post="/categories/create" hx-target-4xx="#new-category-error" hx-target-5xx="#new-category-error" hx-swap="innerHTML">
+                        <div id="new-category-error" class="mb-4 text-center"></div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
+                            <input type="text" name="name" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required />
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-10">
+                            <button type="button" @click="document.getElementById('modal-category').classList.add('hidden')" class="order-2 sm:order-1 px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors font-medium">Cancel</button>
+                            <button type="submit" class="order-1 sm:order-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium">Create Category</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+templ CategoryOptions(categories []models.Category, includeAlpine bool) {
+    for _, cat := range categories {
+        if includeAlpine {
+            <option :disabled={ fmt.Sprintf("showDeleteCategoryModal == %d", cat.ID) } value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+        } else {
+            <option value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+        }
+    }
+}
+
+templ CategoryGrid(categories []models.CategoryWithTags) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        for _, cat := range categories {
+            <div 
+                class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors"
+                :class="{ 'border-blue-400 border-2 bg-blue-50/50 dark:bg-blue-900/10': draggedTagId !== null }"
+                @dragover.prevent=""
+                @drop.prevent={ fmt.Sprintf("if (draggedTagId) { htmx.ajax('POST', '/tags/' + draggedTagId + '/move/%d', { swap: 'none' }); draggedTagId = null }", cat.ID) }
+            >
+                <div class="flex justify-between items-start mb-4">
+                    <div class="group flex items-center space-x-2">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white group-hover:hidden">{ cat.Name }</h2>
+                        <form hx-put={ fmt.Sprintf("/categories/%d", cat.ID) } hx-swap="none" class="hidden group-hover:flex items-center space-x-1">
+                            <input type="text" name="name" value={ cat.Name } class="text-lg font-bold bg-gray-50 dark:bg-gray-700 border-none rounded px-1 w-32 focus:ring-1 focus:ring-blue-500 text-gray-900 dark:text-white" />
+                            <button type="submit" class="text-green-600 hover:text-green-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </form>
+                        <button @click={ fmt.Sprintf("showDeleteCategoryModal = %d", cat.ID) } class="text-gray-400 hover:text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button 
+                        @click={ fmt.Sprintf("document.getElementById('modal-tag-%d').classList.remove('hidden')", cat.ID) }
+                        class="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2.5 min-h-[44px]">
+                    for _, tag := range cat.Tags {
+                        @components.CategoryTag(tag)
+                    }
+                </div>
+            </div>
+
+            <!-- Modal for new tag in this category -->
+            <div id={ fmt.Sprintf("modal-tag-%d", cat.ID) } class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ newFilters: [], apply: false, selectedColor: 'blue' }">
+                    <h3 class="text-xl font-bold mb-4 dark:text-white">Add Tag to { cat.Name }</h3>
+                    <form hx-post="/tags/create" hx-target-4xx={ fmt.Sprintf("#new-tag-error-%d", cat.ID) } hx-target-5xx={ fmt.Sprintf("#new-tag-error-%d", cat.ID) } hx-swap="innerHTML">
+                        <div id={ fmt.Sprintf("new-tag-error-%d", cat.ID) } class="mb-4 text-center"></div>
+                        <input type="hidden" name="category_id" value={ fmt.Sprint(cat.ID) } />
+                        <input type="hidden" name="apply" :value="apply" />
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag Name</label>
+                            <input type="text" name="name" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg outline-none dark:text-white" required />
+                        </div>
+
+                        @components.TagColorPicker("color", "blue")
+                        
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Auto-tagging Filters</label>
+                                <button type="button" @click="if (!newFilters) { newFilters = [] }; newFilters.push({ pattern: '', filter_type: 'string' })" class="text-sm text-blue-600 hover:text-blue-700 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Filter
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <template x-if="newFilters">
+                                    <template x-for="(filter, index) in newFilters" :key="index">
+                                        <div class="flex items-start sm:items-center space-x-3 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                                            <div class="flex-1 flex flex-col sm:flex-row gap-2">
+                                                <select name="filter_type[]" x-model="filter.filter_type" class="w-full sm:w-auto px-2 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-white outline-none">
+                                                    <option value="string">String Match</option>
+                                                    <option value="regex">Regex</option>
+                                                    <option value="amount_greater">Amount &gt;</option>
+                                                    <option value="amount_less">Amount &lt;</option>
+                                                    <option value="amount_equal">Amount =</option>
+                                                </select>
+                                                <input type="text" name="filter_pattern[]" x-model="filter.pattern" placeholder="Pattern or value" class="flex-1 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm dark:text-white outline-none" required />
+                                            </div>
+                                            <button type="button" @click="newFilters.splice(index, 1)" class="text-red-500 hover:text-red-700 p-1 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </template>
+                                <div x-show="!newFilters || newFilters.length === 0" class="text-center py-4 text-gray-500 text-sm border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-lg">
+                                    No filters defined for this tag. Add a filter below.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-10">
+                            <button type="button" @click={ fmt.Sprintf("document.getElementById('modal-tag-%d').classList.add('hidden')", cat.ID) } class="order-3 sm:order-1 px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors font-medium">Cancel</button>
+                            <button type="submit" @click="apply = false" class="order-2 sm:order-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all font-medium">Save Tag</button>
+                            <button type="submit" @click="apply = true" class="order-1 sm:order-3 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center space-x-2 font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                <span>Save & Apply</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}

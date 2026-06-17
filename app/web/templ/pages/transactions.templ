@@ -1,0 +1,410 @@
+package pages
+
+import (
+    "FinancialTracker/web/templ/layouts"
+    "FinancialTracker/internal/models"
+    "FinancialTracker/internal/utils"
+    "fmt"
+    "strings"
+)
+
+templ Transactions(data *models.PageData) {
+    @layouts.Base(data) {
+        <div class="space-y-6 max-w-full pb-10">
+            <!-- Header Section -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Manage and categorize your spending</p>
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button 
+                        hx-post="/plaid/sync"
+                        hx-swap="none"
+                        class="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-sm flex items-center justify-center space-x-2 font-semibold"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Sync Now</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700" 
+                 x-data={ getFilterData(data) }>
+                <form 
+                    hx-get="/transactions" 
+                    hx-trigger="change, keyup delay:500ms from:input[name='search']"
+                    hx-target="#transaction-results" 
+                    hx-select="#transaction-results"
+                    hx-push-url="true"
+                    class="space-y-4"
+                >
+                    <div class="space-y-4">
+                        <!-- Full-width Search Bar -->
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="search" 
+                                placeholder="Search by merchant, name, or description..." 
+                                value={ getSearchValue(data) }
+                                class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none dark:text-white transition-all font-medium"
+                            />
+                        </div>
+
+                        <!-- Filters Row -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:flex lg:flex-row gap-4 items-start lg:items-center">
+                            <div class="w-full lg:flex-1">
+                                <select 
+                                    name="category_id" 
+                                    x-model="selectedCategory"
+                                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none dark:text-white transition-all cursor-pointer"
+                                >
+                                    <option value="">All Categories</option>
+                                    if d, ok := data.Data.(models.TransactionPageData); ok {
+                                        for _, cat := range d.Categories {
+                                            <option value={ fmt.Sprint(cat.ID) } selected?={ getCategoryFilterValue(data) == fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="w-full lg:flex-1">
+                                <select 
+                                    name="tag_id" 
+                                    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none dark:text-white transition-all cursor-pointer"
+                                >
+                                    <option value="">All Tags</option>
+                                    <template x-for="tag in allTags.filter(t => !selectedCategory || t.category_id == selectedCategory)">
+                                        <option :value="tag.id" :selected="tag.id == selectedTag" x-text="tag.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div class="w-full md:col-span-2 lg:flex-1">
+                                <select name="sort" class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none dark:text-white transition-all cursor-pointer">
+                                    <option value="date_desc" selected?={ getSortValue(data) == "date_desc" }>Newest First</option>
+                                    <option value="date_asc" selected?={ getSortValue(data) == "date_asc" }>Oldest First</option>
+                                    <option value="amount_desc" selected?={ getSortValue(data) == "amount_desc" }>Highest Amount</option>
+                                    <option value="amount_asc" selected?={ getSortValue(data) == "amount_asc" }>Lowest Amount</option>
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:col-span-2 lg:w-auto">
+                                <div class="relative w-full sm:w-1/2 md:flex-1 lg:w-32">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">$</span>
+                                    <input type="number" name="min_amount" step="0.01" placeholder="Min Amount" value={ getMinAmount(data) } class="w-full pl-7 pr-3 py-2.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl outline-none dark:text-white transition-all" />
+                                </div>
+                                <div class="relative w-full sm:w-1/2 md:flex-1 lg:w-32">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">$</span>
+                                    <input type="number" name="max_amount" step="0.01" placeholder="Max Amount" value={ getMaxAmount(data) } class="w-full pl-7 pr-3 py-2.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl outline-none dark:text-white transition-all" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div 
+                id="transaction-results" 
+                class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-visible"
+                x-data={ getResultsData(data) }
+            >
+                <!-- Bulk Actions Bar (Sticky) -->
+                <div 
+                    class="sticky top-0 z-30 bg-white dark:bg-gray-800 p-4 flex flex-col md:flex-row justify-between items-center gap-4 transition-all duration-300 shadow-lg rounded-t-2xl border-b dark:border-gray-700" 
+                    x-show="selected.length > 0" 
+                    x-transition:enter="translate-y-0"
+                    x-transition:leave="-translate-y-full"
+                    x-cloak
+                >
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-600 p-2 rounded-lg text-white">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <span class="font-bold text-lg text-gray-900 dark:text-white" x-text="selected.length + ' Selected'"></span>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Category Filter for Bulk Actions -->
+                        <div class="relative min-w-[150px]">
+                            <select 
+                                x-model="bulkCategory"
+                                class="w-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm px-3 py-2 rounded-lg outline-none border border-gray-200 dark:border-gray-600 cursor-pointer focus:ring-1 focus:ring-blue-500"
+                            >
+                                <option value="">All Categories</option>
+                                if d, ok := data.Data.(models.TransactionPageData); ok {
+                                    for _, cat := range d.Categories {
+                                        <option value={ fmt.Sprint(cat.ID) }>{ cat.Name }</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <form hx-post="/transactions/bulk-add-tag" hx-swap="none" class="flex items-center space-x-2">
+                            <template x-for="id in selected">
+                                <input type="hidden" name="transaction_ids" :value="id" />
+                            </template>
+                            <select name="tag_id" class="bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm px-3 py-2 rounded-lg outline-none border border-gray-200 dark:border-gray-600 cursor-pointer focus:ring-1 focus:ring-blue-500" required>
+                                <option value="">Add Tag...</option>
+                                <template x-for="tag in allTags.filter(t => !bulkCategory || t.category_id == bulkCategory)">
+                                    <option :value="tag.id" x-text="tag.name"></option>
+                                </template>
+                            </select>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-sm">Add</button>
+                        </form>
+                        
+                        <form hx-post="/transactions/bulk-remove-tag" hx-swap="none" class="flex items-center space-x-2">
+                            <template x-for="id in selected">
+                                <input type="hidden" name="transaction_ids" :value="id" />
+                            </template>
+                            <select name="tag_id" class="bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm px-3 py-2 rounded-lg outline-none border border-gray-200 dark:border-gray-600 cursor-pointer focus:ring-1 focus:ring-blue-500" required>
+                                <option value="">Remove Tag...</option>
+                                <template x-for="tag in allTags.filter(t => !bulkCategory || t.category_id == bulkCategory)">
+                                    <option :value="tag.id" x-text="tag.name"></option>
+                                </template>
+                            </select>
+                            <button type="submit" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600">Remove</button>
+                        </form>
+                        
+                        <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm font-bold px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" @click="selected = []">Deselect</button>
+                    </div>
+                </div>
+
+                <!-- Mobile Card View Controls -->
+                <div class="lg:hidden bg-gray-50/50 dark:bg-gray-700/30 p-4 border-b dark:border-gray-700 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <input 
+                            type="checkbox" 
+                            id="mobile-select-all"
+                            class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 bg-white dark:bg-gray-800 transition-all cursor-pointer" 
+                            :checked="isAllSelected"
+                            @click="toggleAll()" 
+                        />
+                        <label for="mobile-select-all" class="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer">Select All</label>
+                    </div>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden lg:block overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50/50 dark:bg-gray-700/30 border-b dark:border-gray-700">
+                            <tr>
+                                <th class="p-5 w-4">
+                                    <div class="flex items-center">
+                                        <input 
+                                            type="checkbox" 
+                                            class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 bg-white dark:bg-gray-800 transition-all cursor-pointer" 
+                                            :checked="isAllSelected"
+                                            @click="toggleAll()" 
+                                        />
+                                    </div>
+                                </th>
+                                <th class="p-5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Date</th>
+                                <th class="p-5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Description</th>
+                                <th class="p-5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-right">Amount</th>
+                                <th class="p-5 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-right">Tags</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y dark:divide-gray-700/50">
+                            if d, ok := data.Data.(models.TransactionPageData); ok {
+                                if len(d.Transactions) > 0 {
+                                    for _, t := range d.Transactions {
+                                        <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-all duration-200">
+                                            <td class="p-5">
+                                                <div class="flex items-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="transaction_ids" 
+                                                        value={ fmt.Sprint(t.ID) }
+                                                        x-model="selected"
+                                                        class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 bg-white dark:bg-gray-800 transition-all"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <span class="text-sm text-gray-600 dark:text-gray-400 font-medium whitespace-nowrap">{ utils.FormatDate(t.Date) }</span>
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="flex flex-col">
+                                                    <span class="text-sm font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{ t.Name }</span>
+                                                    if t.MerchantName != "" && t.MerchantName != t.Name {
+                                                        <span class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{ t.MerchantName }</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class={ "p-5 text-sm font-black text-right", templ.KV("text-green-500 dark:text-green-400", t.Amount < 0), templ.KV("text-gray-900 dark:text-white", t.Amount >= 0) }>
+                                                { utils.FormatAmount(t.Amount) }
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="flex flex-wrap justify-end gap-1.5">
+                                                    for _, tag := range t.Tags {
+                                                        <span class="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded-md text-[10px] font-bold uppercase tracking-tight">
+                                                            { tag.Name }
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                } else {
+                                    <tr>
+                                        <td colspan="6" class="p-10 text-center text-gray-500 dark:text-gray-400">
+                                            <p class="text-lg font-medium">No transactions found</p>
+                                            <p class="text-sm">Try adjusting your filters or search terms.</p>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="lg:hidden divide-y dark:divide-gray-700/50">
+                    if d, ok := data.Data.(models.TransactionPageData); ok {
+                        if len(d.Transactions) > 0 {
+                            for _, t := range d.Transactions {
+                                <div class="p-4 flex items-start space-x-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                                    <div class="pt-1">
+                                        <input 
+                                            type="checkbox" 
+                                            name="transaction_ids" 
+                                            value={ fmt.Sprint(t.ID) }
+                                            x-model="selected"
+                                            class="w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 bg-white dark:bg-gray-800"
+                                        />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <div class="flex flex-col">
+                                                <span class="text-xs text-gray-500 font-medium">{ utils.FormatDate(t.Date) }</span>
+                                                <span class="text-sm font-bold text-gray-900 dark:text-white truncate pr-2">{ t.Name }</span>
+                                            </div>
+                                            <span class={ "text-sm font-black whitespace-nowrap", templ.KV("text-green-500 dark:text-green-400", t.Amount < 0), templ.KV("text-gray-900 dark:text-white", t.Amount >= 0) }>
+                                                { utils.FormatAmount(t.Amount) }
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                                            if t.PlaidCategory != "" {
+                                                <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                                    { t.PlaidCategory }
+                                                </span>
+                                            }
+                                            for _, tag := range t.Tags {
+                                                <span class="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50 rounded text-[9px] font-bold uppercase tracking-tight">
+                                                    { tag.Name }
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        } else {
+                            <div class="p-10 text-center text-gray-500 dark:text-gray-400">
+                                <p class="text-lg font-medium">No transactions found</p>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <!-- Pagination -->
+                if d, ok := data.Data.(models.TransactionPageData); ok && d.TotalCount > d.PageSize {
+                    <div class="bg-gray-50/50 dark:bg-gray-700/30 p-5 border-t dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <span class="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                            Showing <span class="text-gray-900 dark:text-white font-bold">{ utils.FormatInt(((d.CurrentPage-1)*d.PageSize)+1) }</span> to <span class="text-gray-900 dark:text-white font-bold">{ utils.FormatInt(min(d.CurrentPage*d.PageSize, d.TotalCount)) }</span> of <span class="text-gray-900 dark:text-white font-bold">{ utils.FormatInt(d.TotalCount) }</span> transactions
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <a 
+                                href={ templ.SafeURL(fmt.Sprintf("/transactions?page=%d&search=%s&sort=%s", d.CurrentPage-1, d.Filters.Search, getSortValue(data))) }
+                                class={ "px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-semibold transition-all hover:bg-white dark:hover:bg-gray-700 shadow-sm", templ.KV("opacity-50 pointer-events-none grayscale", d.CurrentPage == 1) }
+                            >Previous</a>
+                            <div class="flex items-center space-x-1">
+                                <span class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-sm">{ utils.FormatInt(d.CurrentPage) }</span>
+                            </div>
+                            <a 
+                                href={ templ.SafeURL(fmt.Sprintf("/transactions?page=%d&search=%s&sort=%s", d.CurrentPage+1, d.Filters.Search, getSortValue(data))) }
+                                class={ "px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-semibold transition-all hover:bg-white dark:hover:bg-gray-700 shadow-sm", templ.KV("opacity-50 pointer-events-none grayscale", d.CurrentPage*d.PageSize >= d.TotalCount) }
+                            >Next</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+func getFilterData(data *models.PageData) string {
+    catID := getCategoryFilterValue(data)
+    tagID := getTagFilterValue(data)
+    tags := getTagsJson(data)
+    return fmt.Sprintf("{ selectedCategory: '%s', selectedTag: '%s', allTags: [%s] }", catID, tagID, tags)
+}
+
+func getResultsData(data *models.PageData) string {
+    tags := getTagsJson(data)
+    return fmt.Sprintf("{ selected: [], bulkCategory: '', allTags: [%s], get allIds() { return Array.from(document.querySelectorAll('input[name=\\'transaction_ids\\']')).map(i => i.value); }, get isAllSelected() { const ids = this.allIds; return ids.length > 0 && ids.every(id => this.selected.includes(id)); }, toggleAll() { if (this.isAllSelected) { this.selected = []; } else { this.selected = this.allIds; } } }", tags)
+}
+
+func getSearchValue(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok {
+        return d.Filters.Search
+    }
+    return ""
+}
+
+func getSortValue(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok {
+        return d.Filters.SortBy + "_" + d.Filters.SortDir
+    }
+    return "date_desc"
+}
+
+func getCategoryFilterValue(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok && d.Filters.CategoryID != nil {
+        return fmt.Sprint(*d.Filters.CategoryID)
+    }
+    return ""
+}
+
+func getTagFilterValue(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok && len(d.Filters.Tags) > 0 {
+        return fmt.Sprint(d.Filters.Tags[0])
+    }
+    return ""
+}
+
+func getTagsJson(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok {
+        var tags []string
+        for _, t := range d.AllTags {
+            tags = append(tags, fmt.Sprintf("{id: '%d', name: '%s', category_id: '%d'}", t.ID, t.Name, t.CategoryID))
+        }
+        return strings.Join(tags, ",")
+    }
+    return ""
+}
+
+func getMinAmount(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok && d.Filters.MinAmount != nil {
+        return fmt.Sprintf("%.2f", *d.Filters.MinAmount)
+    }
+    return ""
+}
+
+func getMaxAmount(data *models.PageData) string {
+    if d, ok := data.Data.(models.TransactionPageData); ok && d.Filters.MaxAmount != nil {
+        return fmt.Sprintf("%.2f", *d.Filters.MaxAmount)
+    }
+    return ""
+}

@@ -1,0 +1,61 @@
+package pages
+
+import (
+	"FinancialTracker/web/templ/layouts"
+	"FinancialTracker/web/templ/components/dashboardwidgets"
+	"FinancialTracker/internal/models"
+)
+
+templ Dashboard(data *models.PageData) {
+	@layouts.Base(data) {
+		if dash, ok := data.Data.(*models.DashboardData); ok && dash != nil {
+			<div
+				class="max-w-6xl mx-auto"
+				x-data="dashboardCustomize()"
+				x-init="initLayout()"
+			>
+				<div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4 sm:mb-6">
+					<h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+					<div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+						<template x-if="!editMode">
+							<button
+								type="button"
+								@click="enterEditMode()"
+								class="w-full sm:w-auto px-4 py-2.5 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+							>
+								Customize
+							</button>
+						</template>
+						<template x-if="editMode">
+							<div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+								<button
+									type="button"
+									@click="cancelEdit()"
+									class="w-full sm:w-auto px-4 py-2.5 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									@click="saveLayout()"
+									class="w-full sm:w-auto px-4 py-2.5 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700"
+								>
+									Save layout
+								</button>
+							</div>
+						</template>
+					</div>
+				</div>
+				@dashboardwidgets.Grid(dash)
+			</div>
+			<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+			<script src="/static/js/dashboard.js"></script>
+			<script src="/static/js/dashboard-charts.js"></script>
+		} else {
+			<div class="max-w-6xl mx-auto text-center py-12">
+				<p class="text-gray-500">Sign in to view your dashboard.</p>
+			</div>
+		}
+	}
+}

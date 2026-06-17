@@ -1,0 +1,53 @@
+package settings
+
+import (
+	"FinancialTracker/internal/models"
+	"FinancialTracker/internal/utils"
+	"fmt"
+)
+
+templ BankAccountList(data *models.PageData) {
+	<div hx-get="/settings/plaid/bank-list" hx-trigger="updateBankList from:body" hx-swap="outerHTML">
+		<div id="bank-accounts-list" class="space-y-4 mb-6">
+			if items, ok := data.Data.([]models.PlaidItem); ok && len(items) > 0 {
+				for _, item := range items {
+					<div class="flex justify-between items-center p-4 border dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+						<div class="flex items-center">
+							<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+								if len(item.InstitutionName) > 0 {
+									<span class="text-blue-600 dark:text-blue-400 font-bold uppercase">{ string(item.InstitutionName[0]) }</span>
+								} else {
+									<span class="text-blue-600 dark:text-blue-400 font-bold uppercase">B</span>
+								}
+							</div>
+							<div>
+								<div class="flex flex-wrap items-center gap-2">
+									<p class="font-semibold text-gray-900 dark:text-white">{ item.InstitutionName }</p>
+									if item.Status == "needs_reauth" {
+										<span class="text-xs font-medium text-amber-600 dark:text-amber-400">Needs re-auth</span>
+									}
+									if item.Status == "disconnected" {
+										<span class="text-xs font-medium text-red-600 dark:text-red-400">Disconnected</span>
+									}
+								</div>
+								<p class="text-xs text-gray-500">Connected on { utils.FormatDate(item.CreatedAt) }</p>
+							</div>
+						</div>
+						<button
+							hx-post={ fmt.Sprintf("/settings/plaid/remove/%s", item.RowID) }
+							hx-swap="none"
+							hx-confirm="Are you sure you want to remove this bank account? All associated transactions will be deleted."
+							class="text-red-500 text-sm font-medium hover:underline"
+						>
+							Remove
+						</button>
+					</div>
+				}
+			} else {
+				<div class="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+					<p class="text-gray-500">No bank accounts connected yet.</p>
+				</div>
+			}
+		</div>
+	</div>
+}
