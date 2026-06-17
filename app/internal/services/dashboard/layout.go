@@ -39,17 +39,17 @@ var validWidgetIDs = map[string]bool{
 
 func defaultWidgets() []models.DashboardWidget {
 	return []models.DashboardWidget{
-		{ID: WidgetNetWorth, Visible: true, Order: 0},
-		{ID: WidgetSpendingByTag, Visible: true, Order: 1},
-		{ID: WidgetMonthCashflow, Visible: true, Order: 2},
-		{ID: WidgetIncomeByTag, Visible: true, Order: 3},
-		{ID: WidgetCashAccounts, Visible: true, Order: 4},
-		{ID: WidgetSavingsAccounts, Visible: true, Order: 5},
-		{ID: WidgetCreditAccounts, Visible: true, Order: 6},
-		{ID: WidgetLoanAccounts, Visible: true, Order: 7},
-		{ID: WidgetInvestmentAccounts, Visible: true, Order: 8},
-		{ID: WidgetQuickActions, Visible: true, Order: 9},
-		{ID: WidgetSpendingTrend, Visible: true, Order: 10},
+		{ID: WidgetMonthCashflow, Visible: true, Order: 0},
+		{ID: WidgetQuickActions, Visible: true, Order: 1},
+		{ID: WidgetNetWorth, Visible: true, Order: 2},
+		{ID: WidgetSpendingByTag, Visible: true, Order: 3},
+		{ID: WidgetSpendingTrend, Visible: true, Order: 4},
+		{ID: WidgetIncomeByTag, Visible: true, Order: 5},
+		{ID: WidgetCashAccounts, Visible: true, Order: 6},
+		{ID: WidgetSavingsAccounts, Visible: true, Order: 7},
+		{ID: WidgetCreditAccounts, Visible: true, Order: 8},
+		{ID: WidgetLoanAccounts, Visible: true, Order: 9},
+		{ID: WidgetInvestmentAccounts, Visible: true, Order: 10},
 		{ID: WidgetRecentTransactions, Visible: true, Order: 11},
 	}
 }

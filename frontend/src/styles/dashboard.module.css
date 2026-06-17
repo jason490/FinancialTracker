@@ -416,6 +416,36 @@
   font-weight: 700;
 }
 
+.chartWrap :global(.apexcharts-tooltip) {
+  background: var(--surface-elevated) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  border-radius: 0.75rem !important;
+}
+
+.chartWrap :global(.apexcharts-tooltip-title) {
+  background: var(--bg-accent) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-weight: 700 !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.chartWrap :global(.apexcharts-tooltip-series-group) {
+  padding: 0.25rem 0.75rem !important;
+}
+
+.chartWrap :global(.apexcharts-tooltip-text) {
+  font-family: var(--font-body) !important;
+  font-size: 0.82rem !important;
+}
+
+.chartWrap :global(.apexcharts-tooltip-marker) {
+  width: 8px !important;
+  height: 8px !important;
+}
+
 .actionStack {
   display: grid;
   gap: 0.65rem;
@@ -444,6 +474,19 @@
   border: 1px solid var(--border);
   color: var(--text);
   background: var(--surface);
+}
+
+.loadingSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .emptyState {

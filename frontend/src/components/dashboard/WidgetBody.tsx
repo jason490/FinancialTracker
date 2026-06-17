@@ -1,6 +1,10 @@
 import type { ApexOptions } from "apexcharts";
-import { For, Show } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import ApexChart from "~/components/dashboard/ApexChart";
+import { SyncIcon } from "~/components/icons";
+import {
+  syncAllPlaidConnections,
+} from "~/lib/plaid";
 import {
   ACCOUNT_BUCKET_COPY,
   WIDGET_IDS,
@@ -27,6 +31,9 @@ type WidgetBodyProps = {
 };
 
 function chartBaseOptions(): ApexOptions {
+  const theme = typeof document !== "undefined" ? document.documentElement.dataset.theme : "light";
+  const isDark = ["dark", "tokyo-night", "forest", "rose", "midnight"].includes(theme || "light");
+
   return {
     chart: {
       background: "transparent",
@@ -43,7 +50,7 @@ function chartBaseOptions(): ApexOptions {
       labels: { colors: readCssVar("--text-muted") },
     },
     tooltip: {
-      theme: document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+      theme: isDark ? "dark" : "light",
     },
   };
 }
@@ -453,7 +460,20 @@ export default function WidgetBody(props: WidgetBodyProps) {
         </article>
       );
 
-    case WIDGET_IDS.quickActions:
+    case WIDGET_IDS.quickActions: {
+      const [syncing, setSyncing] = createSignal(false);
+
+      const handleSync = async () => {
+        setSyncing(true);
+        try {
+          await syncAllPlaidConnections();
+        } catch (err) {
+          console.error("Sync failed:", err);
+        } finally {
+          setSyncing(false);
+        }
+      };
+
       return (
         <article class={styles.widget}>
           <header class={styles.widgetHeader}>
@@ -463,7 +483,18 @@ export default function WidgetBody(props: WidgetBodyProps) {
             </div>
           </header>
           <div class={styles.actionStack}>
-            <a class={styles.primaryAction} href="/manage">
+            <button
+              type="button"
+              class={styles.primaryAction}
+              disabled={syncing()}
+              onClick={handleSync}
+            >
+              <Show when={syncing()} fallback={<SyncIcon size={16} style={{ "margin-right": "0.5rem" }} />}>
+                <span class={styles.loadingSpinner} style={{ "margin-right": "0.5rem" }} />
+              </Show>
+              {syncing() ? "Syncing..." : "Sync transactions"}
+            </button>
+            <a class={styles.secondaryAction} href="/settings?tab=connections">
               Manage connections
             </a>
             <a class={styles.secondaryAction} href="/settings">
@@ -472,6 +503,7 @@ export default function WidgetBody(props: WidgetBodyProps) {
           </div>
         </article>
       );
+    }
 
     default:
       return (

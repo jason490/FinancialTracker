@@ -1,8 +1,9 @@
-import { Show } from "solid-js";
+import { Show, JSX } from "solid-js";
 import styles from "~/styles/transactions.module.css";
 
 interface TransactionHeaderProps {
   totalCount?: number;
+  children?: JSX.Element;
 }
 
 export function TransactionHeader(props: TransactionHeaderProps) {
@@ -20,6 +21,9 @@ export function TransactionHeader(props: TransactionHeaderProps) {
               <strong>{props.totalCount}</strong> transaction{props.totalCount !== 1 ? "s" : ""} found
             </p>
           </Show>
+        </div>
+        <div class={styles.headerActions}>
+          {props.children}
         </div>
       </div>
     </header>

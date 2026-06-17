@@ -16,6 +16,8 @@ import { Portal } from "solid-js/web";
 import AppLayout from "~/layouts/AppLayout";
 import { useAuth } from "~/lib/auth-context";
 import { getTransactions, bulkAddTag, bulkRemoveTag } from "~/lib/transactions";
+import { syncAllPlaidConnections } from "~/lib/plaid";
+import { SyncIcon } from "~/components/icons";
 import type { TransactionQueryParams } from "~/lib/transactions";
 import { TransactionHeader } from "~/components/transactions/TransactionHeader";
 import { TransactionToolbar } from "~/components/transactions/TransactionToolbar";
@@ -91,6 +93,19 @@ export default function TransactionsPage() {
   const [bulkTagId, setBulkTagId] = createSignal<number | undefined>();
   const [bulkAction, setBulkAction] = createSignal<"add" | "remove">("add");
   const [bulkLoading, setBulkLoading] = createSignal(false);
+  const [syncing, setSyncing] = createSignal(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await syncAllPlaidConnections();
+      refetch();
+    } catch (err) {
+      console.error("Sync failed:", err);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // ── Filter debouncing ───────────────────────────────────
   let debounceTimer: number | undefined;
@@ -275,7 +290,19 @@ export default function TransactionsPage() {
       <div class={styles.page}>
         <Suspense fallback={<TransactionSkeletonList count={8} />}>
           <Show when={metadata()}>
-            <TransactionHeader totalCount={data.latest?.total_count} />
+            <TransactionHeader totalCount={data.latest?.total_count}>
+              <button
+                type="button"
+                class={styles.primaryButton}
+                disabled={syncing()}
+                onClick={() => void handleSync()}
+              >
+                <Show when={syncing()} fallback={<SyncIcon size={18} style={{ "margin-right": "0.5rem" }} />}>
+                  <span class={styles.loadingSpinner} style={{ "margin-right": "0.5rem" }} />
+                </Show>
+                {syncing() ? "Syncing..." : "Sync transactions"}
+              </button>
+            </TransactionHeader>
 
             <TransactionToolbar
               search={search}
