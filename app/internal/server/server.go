@@ -1,10 +1,15 @@
 package server
 
 import (
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/services/auth"
+	"FinancialTracker/internal/services/mail"
 	"FinancialTracker/internal/services/dashboard"
+	"FinancialTracker/internal/services/financial"
 	"FinancialTracker/internal/services/plaid"
 	"FinancialTracker/internal/services/settings"
+	"FinancialTracker/internal/services/stripebilling"
+	"FinancialTracker/internal/services/subscription"
 	"FinancialTracker/internal/services/tags"
 	"FinancialTracker/internal/services/transactions"
 	"FinancialTracker/internal/storage"
@@ -27,7 +32,9 @@ type Server struct {
 	settingsService      *settings.SettingsService
 	dashService          *dashboard.DashboardService
 	plaidService         *plaid.PlaidService
-	googleOauthConfig    *oauth2.Config
+	financialFacade      *financial.Facade
+	subscriptionService  *subscription.Service
+	billingService       *stripebilling.Service
 	apiGoogleOauthConfig *oauth2.Config
 }
 
@@ -58,10 +65,14 @@ func RunServer(store *storage.Storage) *echo.Echo {
 	// The cookie is NOT HttpOnly so the SPA can read it and send the value
 	// back as the X-CSRF-Token header on state-changing requests.
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		Skipper: func(c *echo.Context) bool {
+			path := c.Path()
+			return path == "/api/v1/plaid/webhook" || path == "/api/v1/stripe/webhook"
+		},
 		TokenLookup:    "header:" + echo.HeaderXCSRFToken + ",form:_csrf",
 		CookieName:     "_csrf",
 		CookiePath:     "/",
-		CookieSecure:   os.Getenv("ENV") != "development",
+		CookieSecure:   !config.IsDevelopment(),
 		CookieHTTPOnly: false, // SPA must read the cookie value
 		CookieSameSite: http.SameSiteLaxMode,
 		TrustedOrigins: corsOrigins,
@@ -70,14 +81,6 @@ func RunServer(store *storage.Storage) *echo.Echo {
 	apiBaseURL := os.Getenv("API_PUBLIC_URL")
 	if apiBaseURL == "" {
 		apiBaseURL = "http://localhost:8080"
-	}
-
-	googleOauthConfig := &oauth2.Config{
-		RedirectURL:  apiBaseURL + "/auth/google/callback",
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
-		Endpoint:     google.Endpoint,
 	}
 
 	apiGoogleOauthConfig := &oauth2.Config{
@@ -89,12 +92,18 @@ func RunServer(store *storage.Storage) *echo.Echo {
 	}
 
 	tagService := tags.NewTaggingService(store)
-	transService := transactions.NewTransactionService(store)
-	authService := auth.NewAuthService(store)
+	mailSender := mail.NewSenderFromEnv()
+	authService := auth.NewAuthService(store, mailSender)
 	ssoService := auth.NewSSOService(store)
 	settingsService := settings.NewSettingsService(store)
 	dashService := dashboard.NewDashboardService(store, tagService)
-	plaidService := plaid.NewPlaidService(store, tagService)
+	subscriptionService := subscription.NewService(store, config.IsDevelopment())
+	subscriptionService.SyncPrivilegeOverridesFromEnv()
+	subscription.ParseUserIDOverrides(store)
+	transService := transactions.NewTransactionService(store, subscriptionService)
+	plaidService := plaid.NewPlaidService(store, tagService, subscriptionService)
+	financialFacade := financial.NewFacade(store, tagService, subscriptionService)
+	billingService := stripebilling.NewService(store, subscriptionService)
 	server := Server{
 		store:                store,
 		e:                    e,
@@ -105,7 +114,9 @@ func RunServer(store *storage.Storage) *echo.Echo {
 		settingsService:      settingsService,
 		dashService:          dashService,
 		plaidService:         plaidService,
-		googleOauthConfig:    googleOauthConfig,
+		financialFacade:      financialFacade,
+		subscriptionService:  subscriptionService,
+		billingService:       billingService,
 		apiGoogleOauthConfig: apiGoogleOauthConfig,
 	}
 

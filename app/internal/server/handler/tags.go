@@ -21,9 +21,9 @@ func NewTagHandler(tagService *tags.TaggingService) *TagHandler {
 
 // HandleGetTags returns all categories and tags for the authenticated user.
 func (h *TagHandler) HandleGetTags(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	data, err := h.tagService.GetTagsData(userID)
@@ -31,14 +31,14 @@ func (h *TagHandler) HandleGetTags(c *echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse("tags_error", "Failed to load tags"))
 	}
 
-	return c.JSON(http.StatusOK, external.ToTagsPayload(data))
+	return c.JSON(http.StatusOK, tags.BuildTagsPayload(data))
 }
 
 // HandleGetTagFilters returns auto-tagging filters for a specific tag.
 func (h *TagHandler) HandleGetTagFilters(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	tagID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -51,14 +51,14 @@ func (h *TagHandler) HandleGetTagFilters(c *echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse("tags_error", "Failed to load tag filters"))
 	}
 
-	return c.JSON(http.StatusOK, external.ToTagFilterViews(filters))
+	return c.JSON(http.StatusOK, tags.BuildTagFilterViews(filters))
 }
 
 // HandleCreateTag creates a new tag with optional filters.
 func (h *TagHandler) HandleCreateTag(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.CreateTagRequest
@@ -76,9 +76,9 @@ func (h *TagHandler) HandleCreateTag(c *echo.Context) error {
 
 // HandleUpdateTag updates an existing tag and its filters.
 func (h *TagHandler) HandleUpdateTag(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	tagID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -106,9 +106,9 @@ func (h *TagHandler) HandleUpdateTag(c *echo.Context) error {
 
 // HandleDeleteTag removes a tag.
 func (h *TagHandler) HandleDeleteTag(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	tagID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -125,9 +125,9 @@ func (h *TagHandler) HandleDeleteTag(c *echo.Context) error {
 
 // HandleMoveTag moves a tag to another category.
 func (h *TagHandler) HandleMoveTag(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	tagID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -149,9 +149,9 @@ func (h *TagHandler) HandleMoveTag(c *echo.Context) error {
 
 // HandleCreateCategory creates a new tag category.
 func (h *TagHandler) HandleCreateCategory(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.CreateCategoryRequest
@@ -168,9 +168,9 @@ func (h *TagHandler) HandleCreateCategory(c *echo.Context) error {
 
 // HandleUpdateCategory renames a category.
 func (h *TagHandler) HandleUpdateCategory(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	categoryID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -192,9 +192,9 @@ func (h *TagHandler) HandleUpdateCategory(c *echo.Context) error {
 
 // HandleDeleteCategory deletes a category and handles its tags per the requested action.
 func (h *TagHandler) HandleDeleteCategory(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	categoryID, err := strconv.ParseInt(c.Param("id"), 10, 64)
@@ -220,7 +220,7 @@ func (h *TagHandler) refreshTags(c *echo.Context, userID int64, status int) erro
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrorResponse("tags_error", "Failed to load tags"))
 	}
-	return c.JSON(status, external.ToTagsPayload(data))
+	return c.JSON(status, tags.BuildTagsPayload(data))
 }
 
 // tagFiltersFromInput converts request filter inputs into parallel pattern/type slices.

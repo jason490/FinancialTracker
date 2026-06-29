@@ -2,6 +2,7 @@ package auth
 
 import (
 	"FinancialTracker/internal/models"
+	"FinancialTracker/internal/services/mail"
 	"FinancialTracker/internal/storage"
 	"FinancialTracker/internal/utils"
 	"errors"
@@ -14,12 +15,14 @@ import (
 )
 
 type AuthService struct {
-	store *storage.Storage
+	store      *storage.Storage
+	mailSender mail.Sender
 }
 
-func NewAuthService(store *storage.Storage) *AuthService {
+func NewAuthService(store *storage.Storage, mailSender mail.Sender) *AuthService {
 	return &AuthService{
-		store: store,
+		store:      store,
+		mailSender: mailSender,
 	}
 }
 
@@ -121,6 +124,11 @@ func (s *AuthService) Register(firstName, lastName, email, password, confirmPass
 	return session, nil
 }
 
+// CompleteOnboarding marks the user's onboarding wizard as finished.
+func (s *AuthService) CompleteOnboarding(userID int64) error {
+	return s.store.CompleteOnboarding(userID)
+}
+
 // Logout invalidates a user session
 func (s *AuthService) Logout(sessionID string) error {
 	if sessionID == "" {
@@ -129,14 +137,3 @@ func (s *AuthService) Logout(sessionID string) error {
 	return s.store.DeleteSession(sessionID)
 }
 
-// RequestPasswordReset validates a password reset request.
-func (s *AuthService) RequestPasswordReset(email string) error {
-	email = strings.ToLower(utils.Sanitize(email))
-	if email == "" {
-		return errors.New("email is required")
-	}
-	if msg, invalid := utils.ValidateEmail(email); invalid {
-		return errors.New(msg)
-	}
-	return nil
-}

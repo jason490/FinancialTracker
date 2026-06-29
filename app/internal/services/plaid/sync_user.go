@@ -40,8 +40,11 @@ func (p *PlaidService) UserHasStaleItems(userID int64) bool {
 	return false
 }
 
-// SyncUser synchronizes accounts and transactions for all non-disconnected items (manual or full sync).
+// SyncUser synchronizes accounts and transactions for all non-disconnected items (manual sync).
 func (p *PlaidService) SyncUser(c *echo.Context, userID int64) error {
+	if err := p.beginManualSync(userID); err != nil {
+		return err
+	}
 	ctx := c.Request().Context()
 	return p.syncItems(&ctx, userID, false)
 }

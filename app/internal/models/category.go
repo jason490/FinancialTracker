@@ -1,6 +1,6 @@
 package models
 
-// Category represents a high-level grouping of tags
+// Category groups tags for organization.
 type Category struct {
 	ID        int64  `json:"id"`
 	UserID    int64  `json:"user_id"`
@@ -8,7 +8,7 @@ type Category struct {
 	CreatedAt int64  `json:"created_at"`
 }
 
-// Tag represents a label for transactions
+// Tag is a user-defined label applied to transactions.
 type Tag struct {
 	ID         int64  `json:"id"`
 	CategoryID int64  `json:"category_id"`
@@ -17,7 +17,7 @@ type Tag struct {
 	CreatedAt  int64  `json:"created_at"`
 }
 
-// TagFilter represents an auto-tagging rule
+// TagFilter is an auto-tagging rule for a tag.
 type TagFilter struct {
 	ID         int64  `json:"id"`
 	UserID     int64  `json:"user_id"`
@@ -27,7 +27,7 @@ type TagFilter struct {
 	CreatedAt  int64  `json:"created_at"`
 }
 
-// CategoryWithTags represents a category along with its associated tags
+// CategoryWithTags pairs a category with its tags.
 type CategoryWithTags struct {
 	Category
 	Tags []Tag

@@ -1,0 +1,48 @@
+.shell {
+  display: grid;
+  position: relative;
+  align-self: start;
+  width: 100%;
+}
+
+.layer {
+  grid-area: 1 / 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.skeletonLayer {
+  transition:
+    opacity 0.42s ease,
+    visibility 0.42s ease;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.skeletonHidden {
+  position: absolute;
+  inset: 0 auto auto 0;
+  height: auto;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.contentLayer {
+  transition: opacity 0.42s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.contentLayer:not(.contentVisible) {
+  position: absolute;
+  inset: 0 auto auto 0;
+  height: auto;
+}
+
+.contentVisible {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}

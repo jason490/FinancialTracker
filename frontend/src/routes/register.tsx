@@ -5,6 +5,7 @@ import AuthLayout from "~/layouts/AuthLayout";
 import FormError from "~/components/auth/FormError";
 import SSOButtons from "~/components/auth/SSOButtons";
 import { register } from "~/lib/auth";
+import { beginAuthTransition } from "~/lib/auth-transition";
 import { RedirectIfAuth, useAuth } from "~/lib/auth-context";
 import styles from "~/styles/auth.module.css";
 
@@ -24,8 +25,12 @@ export default function RegisterPage() {
 
     try {
       await register(data);
+      beginAuthTransition({
+        title: "Welcome aboard",
+        hint: "Setting up your workspace",
+      });
       await refetch();
-      navigate("/dashboard");
+      navigate("/onboarding", { replace: true });
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {

@@ -82,18 +82,6 @@ func DisplayBalance(acc models.Account, bucket string) float64 {
 	return bal
 }
 
-// NetWorthContribution returns the signed amount this account adds to net worth.
-func NetWorthContribution(acc models.Account, bucket string) float64 {
-	if ExcludedFromTotals(acc) {
-		return 0
-	}
-	bal := DisplayBalance(acc, bucket)
-	if IsLiabilityBucket(bucket) {
-		return -bal
-	}
-	return bal
-}
-
 // GroupAccounts organizes accounts by bucket while preserving input order within each bucket.
 func GroupAccounts(accounts []models.Account) map[string][]models.Account {
 	groups := make(map[string][]models.Account, len(AllBuckets))
@@ -144,24 +132,6 @@ func BuildSummary(accounts []models.Account) models.DashboardSummary {
 
 	summary.NetWorth = summary.Cash + summary.Savings + summary.Investments - summary.CreditDebt - summary.LoanDebt
 	return summary
-}
-
-// BucketTotalFromSummary returns the summary total for a bucket.
-func BucketTotalFromSummary(summary models.DashboardSummary, bucket string) float64 {
-	switch bucket {
-	case BucketCash:
-		return summary.Cash
-	case BucketSavings:
-		return summary.Savings
-	case BucketCredit:
-		return summary.CreditDebt
-	case BucketLoans:
-		return summary.LoanDebt
-	case BucketInvestments:
-		return summary.Investments
-	default:
-		return 0
-	}
 }
 
 // BuildDashboardData assembles the full dashboard view model.

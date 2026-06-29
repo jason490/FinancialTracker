@@ -3,6 +3,7 @@ import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { Suspense } from "solid-js";
 import ThemeProvider from "~/components/ThemeProvider";
+import AuthTransitionOverlay from "~/components/AuthTransitionOverlay";
 import { AuthProvider } from "~/lib/auth-context";
 import "./app.css";
 
@@ -14,6 +15,7 @@ export default function App() {
           <AuthProvider>
             <ThemeProvider>
               <Title>Financial Tracker</Title>
+              <AuthTransitionOverlay />
               <Suspense>{props.children}</Suspense>
             </ThemeProvider>
           </AuthProvider>

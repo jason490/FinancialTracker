@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"FinancialTracker/internal/models"
-	"encoding/json"
 	"sort"
 )
 
@@ -103,45 +102,4 @@ func NormalizeLayout(layout models.DashboardLayout) models.DashboardLayout {
 		Desktop: normalizeWidgets(layout.Desktop),
 		Mobile:  normalizeWidgets(layout.Mobile),
 	}
-}
-
-// ParseLayoutJSON decodes and validates layout JSON from the client.
-func ParseLayoutJSON(raw string) (models.DashboardLayout, error) {
-	var layout models.DashboardLayout
-	if err := json.Unmarshal([]byte(raw), &layout); err != nil {
-		return models.DashboardLayout{}, err
-	}
-	return NormalizeLayout(layout), nil
-}
-
-// WidgetsForRender returns widgets to display: all widgets in edit mode, otherwise only visible ones.
-// Used primarily by the legacy Templ frontend, defaults to Desktop layout.
-func WidgetsForRender(data *models.DashboardData) []models.DashboardWidget {
-	if data == nil {
-		return nil
-	}
-	layout := NormalizeLayout(data.Layout)
-	if data.EditMode {
-		widgets := make([]models.DashboardWidget, len(layout.Desktop))
-		copy(widgets, layout.Desktop)
-		sort.Slice(widgets, func(i, j int) bool {
-			return widgets[i].Order < widgets[j].Order
-		})
-		return widgets
-	}
-	return VisibleWidgets(layout.Desktop)
-}
-
-// VisibleWidgets returns visible widgets sorted by order from the provided widget slice.
-func VisibleWidgets(widgets []models.DashboardWidget) []models.DashboardWidget {
-	var visible []models.DashboardWidget
-	for _, w := range widgets {
-		if w.Visible {
-			visible = append(visible, w)
-		}
-	}
-	sort.Slice(visible, func(i, j int) bool {
-		return visible[i].Order < visible[j].Order
-	})
-	return visible
 }

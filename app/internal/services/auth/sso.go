@@ -220,15 +220,6 @@ func (s *SSOService) ParseAPIState(state string) (*APIOAuthState, error) {
 	}, nil
 }
 
-// ParseAPIReturnTo decodes and verifies the frontend return URL from an encrypted OAuth state value.
-func (s *SSOService) ParseAPIReturnTo(state string) (string, error) {
-	oauthState, err := s.ParseAPIState(state)
-	if err != nil {
-		return "", err
-	}
-	return oauthState.ReturnTo, nil
-}
-
 // APICallbackResult contains the redirect target and session info after Google SSO.
 type APICallbackResult struct {
 	ReturnTo  string

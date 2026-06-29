@@ -122,7 +122,7 @@ export function FilterPanel(props: FilterPanelProps) {
             </div>
           </div>
 
-          {/* Amount range */}
+          {/* Amount range — filters by magnitude (absolute value) so it works for both expenses and income */}
           <div class={`${styles.filterGroup} ${styles.filterGroupFull}`}>
             <label class={styles.filterLabel}>Amount Range</label>
             <div class={styles.filterRow}>
@@ -133,7 +133,17 @@ export function FilterPanel(props: FilterPanelProps) {
                   class={styles.filterInput}
                   placeholder="0.00"
                   value={props.minAmount()}
-                  onInput={(e) => props.setMinAmount(e.currentTarget.value)}
+                  onInput={(e) => {
+                    const raw = e.currentTarget.value;
+                    if (raw === "") {
+                      props.setMinAmount("");
+                      return;
+                    }
+                    const n = parseFloat(raw);
+                    if (!Number.isFinite(n)) return;
+                    props.setMinAmount(String(Math.abs(n)));
+                  }}
+                  min="0"
                   step="0.01"
                   inputmode="decimal"
                 />
@@ -145,7 +155,17 @@ export function FilterPanel(props: FilterPanelProps) {
                   class={styles.filterInput}
                   placeholder="0.00"
                   value={props.maxAmount()}
-                  onInput={(e) => props.setMaxAmount(e.currentTarget.value)}
+                  onInput={(e) => {
+                    const raw = e.currentTarget.value;
+                    if (raw === "") {
+                      props.setMaxAmount("");
+                      return;
+                    }
+                    const n = parseFloat(raw);
+                    if (!Number.isFinite(n)) return;
+                    props.setMaxAmount(String(Math.abs(n)));
+                  }}
+                  min="0"
                   step="0.01"
                   inputmode="decimal"
                 />

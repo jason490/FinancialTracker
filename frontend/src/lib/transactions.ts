@@ -1,5 +1,7 @@
 import { clientApiRequest } from "./api";
-import type { TransactionListPayload } from "./types";
+import { getPublicApiUrl, isCapacitorClient } from "./env";
+import { ClientApiError } from "./api-error";
+import type { APIError, TransactionListPayload } from "./types";
 
 export type TransactionQueryParams = {
   search?: string;
@@ -55,4 +57,66 @@ export async function bulkRemoveTag(transactionIds: number[], tagId: number): Pr
     method: "POST",
     body: { transaction_ids: transactionIds.map(String), tag_id: tagId },
   });
+}
+
+export type TransactionExportResult = {
+  blob: Blob;
+  filename: string;
+};
+
+// buildExportUrl resolves the full URL for the CSV export endpoint, honoring
+// the same browser vs. Capacitor routing rules as the JSON client.
+function buildExportUrl(): string {
+  const path = "/api/v1/transactions/export";
+  if (isCapacitorClient()) {
+    const base = getPublicApiUrl().replace(/\/$/, "");
+    return `${base}${path}`;
+  }
+  if (typeof window !== "undefined") {
+    return path;
+  }
+  const base = getPublicApiUrl().replace(/\/$/, "");
+  return `${base}${path}`;
+}
+
+// filenameFromDisposition extracts the suggested filename from a
+// Content-Disposition header, falling back to a date-stamped default.
+function filenameFromDisposition(header: string | null): string {
+  if (!header) return defaultExportFilename();
+  const match = /filename="?([^";]+)"?/i.exec(header);
+  return match?.[1] ?? defaultExportFilename();
+}
+
+function defaultExportFilename(): string {
+  const now = new Date();
+  const stamp = now.toISOString().slice(0, 10);
+  return `financial-tracker-transactions-${stamp}.csv`;
+}
+
+// fetchTransactionsExport downloads the user's full transaction history as a
+// CSV blob, including assigned tags and the categories those tags belong to.
+export async function fetchTransactionsExport(): Promise<TransactionExportResult> {
+  const url = buildExportUrl();
+  const response = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "text/csv" },
+  });
+
+  if (!response.ok) {
+    let message = `Export failed with status ${response.status}`;
+    let code = "export_failed";
+    try {
+      const body = (await response.json()) as APIError;
+      message = body.message || message;
+      code = body.code || code;
+    } catch {
+      // Non-JSON error body; keep defaults.
+    }
+    throw new ClientApiError(message, response.status, code);
+  }
+
+  const blob = await response.blob();
+  const filename = filenameFromDisposition(response.headers.get("Content-Disposition"));
+  return { blob, filename };
 }

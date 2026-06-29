@@ -7,8 +7,13 @@ type User struct {
 	FirstName       string    `json:"first_name"`
 	LastName        string    `json:"last_name"`
 	PasswordHash    string    `json:"-"`
-	ThemePreference string    `json:"theme_preference"`
-	CreatedAt       int64     `json:"created_at"`
+	ThemePreference      string    `json:"theme_preference"`
+	SubscriptionTier     string    `json:"subscription_tier"`
+	SubscriptionStartedAt int64    `json:"subscription_started_at,omitempty"`
+	StripeCustomerID     string    `json:"-"`
+	StripeSubscriptionID string    `json:"-"`
+	OnboardingCompleted  bool      `json:"onboarding_completed"`
+	CreatedAt            int64     `json:"created_at"`
 	SSOs            []UserSSO `json:"sso_logins,omitempty"`
 }
 

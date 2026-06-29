@@ -1,13 +1,7 @@
-import {
-  createContext,
-  useContext,
-  createResource,
-  ParentProps,
-  createEffect,
-  Show,
-} from "solid-js";
+import { createContext, useContext, createResource, ParentProps, createEffect, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { getCurrentUser } from "./auth";
+import { getCurrentUser, postAuthPath } from "./auth";
+import { authTransitionActive } from "./auth-transition";
 import type { SessionProfile } from "./types";
 
 interface AuthContextValue {
@@ -80,8 +74,12 @@ export function RedirectIfAuth(props: ParentProps) {
   const navigate = useNavigate();
 
   createEffect(() => {
+    if (authTransitionActive()) {
+      return;
+    }
+
     if (auth.isAuthenticated()) {
-      navigate("/dashboard", { replace: true });
+      navigate(postAuthPath(auth.user()), { replace: true });
     }
   });
 

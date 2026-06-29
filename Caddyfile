@@ -4,7 +4,7 @@
 }
 
 # Respond to both localhost and the local DNS name
-http://localhost, http://laptop-server.home.arpa {
+http://localhost, http://laptop-server.home.arpa, http://host.docker.internal {
     # Route API requests to the Go backend
     handle /api/* {
         reverse_proxy backend:8080

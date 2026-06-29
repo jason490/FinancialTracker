@@ -1,0 +1,25 @@
+{
+    admin off
+}
+
+{$SITE_ADDRESS} {
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /api {
+        reverse_proxy backend:8080
+    }
+
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+
+    encode gzip
+
+    log {
+        output stdout
+    }
+}

@@ -2,7 +2,6 @@ import { Title } from "@solidjs/meta";
 import { useNavigate } from "@solidjs/router";
 import {
   Show,
-  For,
   createSignal,
   createResource,
   Suspense,
@@ -14,10 +13,13 @@ import {
 } from "solid-js";
 import { Portal } from "solid-js/web";
 import AppLayout from "~/layouts/AppLayout";
+import { SyncIcon } from "~/components/icons";
+import PageStatusBanner, { type PageStatus } from "~/components/PageStatusBanner";
 import { useAuth } from "~/lib/auth-context";
 import { getTransactions, bulkAddTag, bulkRemoveTag } from "~/lib/transactions";
-import { syncAllPlaidConnections } from "~/lib/plaid";
-import { SyncIcon } from "~/components/icons";
+import { syncAllConnections } from "~/lib/connections";
+import { reportSyncError } from "~/lib/api-error";
+import { useMinLoadingHold } from "~/lib/loading-transition";
 import type { TransactionQueryParams } from "~/lib/transactions";
 import { TransactionHeader } from "~/components/transactions/TransactionHeader";
 import { TransactionToolbar } from "~/components/transactions/TransactionToolbar";
@@ -72,21 +74,7 @@ export default function TransactionsPage() {
   });
 
   const [pending, startTransition] = useTransition();
-  const [visualLoading, setVisualLoading] = createSignal(false);
-  let loadingStartTime = 0;
-  const MIN_LOADING_MS = 250;
-
-  createEffect(() => {
-    if (pending()) {
-      setVisualLoading(true);
-      loadingStartTime = Date.now();
-    } else {
-      const elapsed = Date.now() - loadingStartTime;
-      const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
-      const timer = setTimeout(() => setVisualLoading(false), remaining);
-      onCleanup(() => clearTimeout(timer));
-    }
-  });
+  const visualLoading = useMinLoadingHold(pending, 250);
 
   // ── Selection state ─────────────────────────────────────
   const [selected, setSelected] = createSignal<Set<number>>(new Set());
@@ -94,14 +82,16 @@ export default function TransactionsPage() {
   const [bulkAction, setBulkAction] = createSignal<"add" | "remove">("add");
   const [bulkLoading, setBulkLoading] = createSignal(false);
   const [syncing, setSyncing] = createSignal(false);
+  const [message, setMessage] = createSignal<PageStatus | null>(null);
 
   const handleSync = async () => {
     setSyncing(true);
     try {
-      await syncAllPlaidConnections();
+      await syncAllConnections();
       refetch();
+      setMessage({ text: "All connections synced.", type: "ok" });
     } catch (err) {
-      console.error("Sync failed:", err);
+      reportSyncError(err, (text, type) => setMessage({ text, type }));
     } finally {
       setSyncing(false);
     }
@@ -159,9 +149,15 @@ export default function TransactionsPage() {
     }
 
     const minA = debouncedMinAmount();
-    if (minA !== "") params.min_amount = parseFloat(minA);
+    if (minA !== "") {
+      const n = parseFloat(minA);
+      if (Number.isFinite(n)) params.min_amount = Math.abs(n);
+    }
     const maxA = debouncedMaxAmount();
-    if (maxA !== "") params.max_amount = parseFloat(maxA);
+    if (maxA !== "") {
+      const n = parseFloat(maxA);
+      if (Number.isFinite(n)) params.max_amount = Math.abs(n);
+    }
     return params;
   };
 
@@ -288,6 +284,7 @@ export default function TransactionsPage() {
       <Title>Transactions | Financial Tracker</Title>
 
       <div class={styles.page}>
+        <PageStatusBanner message={message} onDismiss={() => setMessage(null)} />
         <Suspense fallback={<TransactionSkeletonList count={8} />}>
           <Show when={metadata()}>
             <TransactionHeader totalCount={data.latest?.total_count}>

@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/models/external"
 	"FinancialTracker/internal/services/auth"
 	"FinancialTracker/internal/storage"
+	"errors"
 	"net/http"
-	"os"
+	"strings"
 
 	"github.com/labstack/echo/v5"
 )
@@ -31,7 +33,7 @@ func (h *AuthHandler) setSessionCookie(c *echo.Context, sessionID string, rememb
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   os.Getenv("ENV") != "development", // Set to true in production via middleware or config
+		Secure:   !config.IsDevelopment(),
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -113,11 +115,10 @@ func (h *AuthHandler) HandleLogout(c *echo.Context) error {
 
 // HandleMe returns the authenticated user's session profile.
 func (h *AuthHandler) HandleMe(c *echo.Context) error {
-	userIDRaw := c.Get("user_id")
-	if userIDRaw == nil {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
-	userID := userIDRaw.(int64)
 
 	profile, err := h.authService.GetSessionProfile(userID)
 	if err != nil {
@@ -125,6 +126,20 @@ func (h *AuthHandler) HandleMe(c *echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, profile)
+}
+
+// HandleCompleteOnboarding marks the authenticated user's onboarding as finished.
+func (h *AuthHandler) HandleCompleteOnboarding(c *echo.Context) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
+	if err := h.authService.CompleteOnboarding(userID); err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse("server_error", "Failed to complete onboarding"))
+	}
+
+	return c.JSON(http.StatusOK, map[string]bool{"onboarding_completed": true})
 }
 
 // HandleForgotPassword accepts a reset request and always returns success.
@@ -138,7 +153,57 @@ func (h *AuthHandler) HandleForgotPassword(c *echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"message": "If an account exists for that email, a reset link will be sent shortly.",
+	return c.JSON(http.StatusOK, external.ForgotPasswordResponse{
+		Message:              "If an account exists for that email, a reset code will be sent shortly.",
+		CodeExpiresInSeconds: auth.ResetCodeTTLSeconds,
 	})
+}
+
+// HandleVerifyResetCode checks a reset code before the user sets a new password.
+func (h *AuthHandler) HandleVerifyResetCode(c *echo.Context) error {
+	var req external.VerifyResetCodeRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_request", "Invalid request body"))
+	}
+
+	expiresAt, err := h.authService.VerifyPasswordResetCode(req.Email, req.Code)
+	if err != nil {
+		if errors.Is(err, auth.ErrInvalidResetCode) {
+			return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_reset_code", "Invalid or expired reset code"))
+		}
+		msg := err.Error()
+		if msg == "email is required" ||
+			msg == "reset code must be 6 digits" ||
+			strings.HasPrefix(msg, "Invalid email") {
+			return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", msg))
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse("server_error", "Server error, try again later"))
+	}
+
+	return c.JSON(http.StatusOK, external.VerifyResetCodeResponse{ExpiresAt: expiresAt})
+}
+
+// HandleResetPassword verifies a reset code and sets a new password.
+func (h *AuthHandler) HandleResetPassword(c *echo.Context) error {
+	var req external.ResetPasswordRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_request", "Invalid request body"))
+	}
+
+	if err := h.authService.ConfirmPasswordReset(req.Email, req.Code, req.NewPassword, req.ConfirmPassword); err != nil {
+		if errors.Is(err, auth.ErrInvalidResetCode) {
+			return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_reset_code", "Invalid or expired reset code"))
+		}
+		msg := err.Error()
+		if msg == "email is required" ||
+			msg == "passwords do not match" ||
+			msg == "reset code must be 6 digits" ||
+			strings.HasPrefix(msg, "Password must") ||
+			strings.HasPrefix(msg, "Invalid email") {
+			return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", msg))
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse("server_error", "Server error, try again later"))
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "success"})
 }

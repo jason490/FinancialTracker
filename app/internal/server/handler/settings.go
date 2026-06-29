@@ -23,9 +23,9 @@ func NewSettingsHandler(settingsService *settings.SettingsService) *SettingsHand
 
 // HandleGetSettings returns the authenticated user's settings profile.
 func (h *SettingsHandler) HandleGetSettings(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	profile, err := h.settingsService.GetProfile(userID)
@@ -38,9 +38,9 @@ func (h *SettingsHandler) HandleGetSettings(c *echo.Context) error {
 
 // HandleUpdateProfile updates the user's first and last name.
 func (h *SettingsHandler) HandleUpdateProfile(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.UpdateProfileRequest
@@ -62,9 +62,9 @@ func (h *SettingsHandler) HandleUpdateProfile(c *echo.Context) error {
 
 // HandleUpdatePassword changes the user's password and clears the session.
 func (h *SettingsHandler) HandleUpdatePassword(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.UpdatePasswordRequest
@@ -95,9 +95,9 @@ func (h *SettingsHandler) HandleUpdatePassword(c *echo.Context) error {
 
 // HandleUpdateTheme persists the user's theme preference.
 func (h *SettingsHandler) HandleUpdateTheme(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.UpdateThemeRequest
@@ -114,9 +114,9 @@ func (h *SettingsHandler) HandleUpdateTheme(c *echo.Context) error {
 
 // HandleUnlinkSSO removes a linked SSO provider from the user account.
 func (h *SettingsHandler) HandleUnlinkSSO(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	provider := c.Param("provider")
@@ -150,9 +150,9 @@ func (h *SettingsHandler) HandleDeleteAccountReauthStatus(c *echo.Context) error
 
 // HandleDeleteAccountVerify verifies password credentials for account deletion.
 func (h *SettingsHandler) HandleDeleteAccountVerify(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	cookie, err := c.Cookie("Session")
@@ -174,9 +174,9 @@ func (h *SettingsHandler) HandleDeleteAccountVerify(c *echo.Context) error {
 
 // HandleDeleteAccountConfirm permanently deletes the user account.
 func (h *SettingsHandler) HandleDeleteAccountConfirm(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	session, ok := c.Get("session").(*models.Session)

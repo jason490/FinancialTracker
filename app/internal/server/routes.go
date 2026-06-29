@@ -1,11 +1,10 @@
 package server
 
 import (
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/server/handler"
-	"FinancialTracker/internal/server/legacyHandler"
 	"FinancialTracker/internal/server/middleware"
 	"net/http"
-	"os"
 
 	"github.com/labstack/echo/v5"
 	echoMiddleware "github.com/labstack/echo/v5/middleware"
@@ -13,21 +12,20 @@ import (
 
 // routes registers all the routes for the application
 func (s *Server) routes() {
-	s.legacy()
 	s.api()
 }
 
-// api registers JSON API routes for the SolidStart frontend.
+// api registers JSON API routes for the SolidStart frontend
 func (s *Server) api() {
 	authHandler := handler.NewAuthHandler(s.authService, s.store)
 	ssoHandler := handler.NewSSOHandler(s.apiGoogleOauthConfig, s.ssoService)
-	authMiddleware := middleware.NewAuthMiddleware(s.store, s.plaidService)
+	authMiddleware := middleware.NewAuthMiddleware(s.store, s.financialFacade)
 
 	api := s.e.Group("/api/v1")
 
 	// Auth Group with conditional rate limiting
 	auth := api.Group("/auth")
-	if os.Getenv("ENV") != "development" {
+	if !config.IsDevelopment() {
 		auth.Use(echoMiddleware.RateLimiter(echoMiddleware.NewRateLimiterMemoryStore(20)))
 	}
 
@@ -41,6 +39,8 @@ func (s *Server) api() {
 	auth.POST("/login", authHandler.HandleLogin)
 	auth.POST("/register", authHandler.HandleRegister)
 	auth.POST("/forgot-password", authHandler.HandleForgotPassword)
+	auth.POST("/verify-reset-code", authHandler.HandleVerifyResetCode)
+	auth.POST("/reset-password", authHandler.HandleResetPassword)
 	auth.GET("/google", ssoHandler.HandleGoogleLogin)
 	auth.GET("/google/callback", ssoHandler.HandleGoogleCallback)
 
@@ -49,6 +49,7 @@ func (s *Server) api() {
 
 	protected := api.Group("", authMiddleware.AuthMiddlewareJSON)
 	protected.POST("/auth/logout", authHandler.HandleLogout)
+	protected.POST("/auth/onboarding/complete", authHandler.HandleCompleteOnboarding)
 
 	dashboardHandler := handler.NewDashboardHandler(s.dashService)
 	protected.GET("/dashboard", dashboardHandler.HandleDashboardGet)
@@ -56,6 +57,7 @@ func (s *Server) api() {
 
 	transactionHandler := handler.NewTransactionHandler(s.transService)
 	protected.GET("/transactions", transactionHandler.HandleGetTransactions)
+	protected.GET("/transactions/export", transactionHandler.HandleExportTransactions)
 	protected.POST("/transactions/bulk-add-tag", transactionHandler.HandleBulkAddTag)
 	protected.POST("/transactions/bulk-remove-tag", transactionHandler.HandleBulkRemoveTag)
 
@@ -81,100 +83,28 @@ func (s *Server) api() {
 	protected.DELETE("/categories/:id", tagHandler.HandleDeleteCategory)
 
 	plaidHandler := handler.NewPlaidHandler(s.plaidService)
-	protected.GET("/plaid/connections", plaidHandler.HandleGetConnections)
-	protected.POST("/plaid/create-link-token", plaidHandler.HandleCreateLinkToken)
-	protected.POST("/plaid/exchange", plaidHandler.HandleExchangeToken)
-	protected.POST("/plaid/sync", plaidHandler.HandleSync)
-	protected.POST("/plaid/create-update-token/:id", plaidHandler.HandleCreateUpdateLinkToken)
-	protected.POST("/plaid/sync-item/:id", plaidHandler.HandleSyncItem)
-	protected.POST("/plaid/disconnect/:id", plaidHandler.HandleDisconnectItem)
-	protected.POST("/plaid/toggle-visibility/:id", plaidHandler.HandleToggleAccountVisibility)
-	protected.POST("/plaid/remove-account/:id", plaidHandler.HandleRemoveAccount)
-}
+	api.POST("/plaid/webhook", plaidHandler.HandleWebhook)
 
-// legacy registers the legacy Templ/HTMX routes
-func (s *Server) legacy() {
-	// Middleware
-	authMiddleware := middleware.NewAuthMiddleware(s.store, s.plaidService)
+	connectionsHandler := handler.NewConnectionsHandler(s.financialFacade.Active())
+	protected.GET("/connections/provider", connectionsHandler.HandleGetProvider)
+	protected.GET("/connections", connectionsHandler.HandleGetConnections)
+	protected.POST("/connections/create-session", connectionsHandler.HandleCreateSession)
+	protected.POST("/connections/complete", connectionsHandler.HandleCompleteConnection)
+	protected.POST("/connections/sync", connectionsHandler.HandleSync)
+	protected.POST("/connections/create-update-session/:id", connectionsHandler.HandleCreateUpdateSession)
+	protected.POST("/connections/sync-item/:id", connectionsHandler.HandleSyncItem)
+	protected.POST("/connections/disconnect/:id", connectionsHandler.HandleDisconnect)
+	protected.POST("/connections/toggle-visibility/:id", connectionsHandler.HandleToggleAccountVisibility)
+	protected.POST("/connections/remove-account/:id", connectionsHandler.HandleRemoveAccount)
 
-	// Handlers
-	homeHandler := legacyHandler.NewHomeHandler(s.store, s.dashService)
-	authHandler := legacyHandler.NewAuthHandler(s.store, s.authService)
-	ssoHandler := legacyHandler.NewSSOHandler(s.store, s.googleOauthConfig, s.ssoService)
-	settingsHandler := legacyHandler.NewSettingsHandler(s.store, s.plaidService, s.settingsService)
-	plaidHandler := legacyHandler.NewPlaidHandler(s.store, s.plaidService)
-	transactionHandler := legacyHandler.NewTransactionHandler(s.store, s.transService)
-	tagHandler := legacyHandler.NewTagHandler(s.store, s.tagService)
+	subscriptionHandler := handler.NewSubscriptionHandler(s.subscriptionService, s.billingService)
+	protected.GET("/subscription", subscriptionHandler.HandleGetSubscription)
+	protected.POST("/subscription/change", subscriptionHandler.HandleChangeSubscription)
+	protected.POST("/subscription/checkout", subscriptionHandler.HandleCreateCheckoutSession)
+	protected.POST("/subscription/portal", subscriptionHandler.HandleCreateBillingPortal)
+	api.POST("/stripe/webhook", subscriptionHandler.HandleStripeWebhook)
 
-	// Static files
-	s.e.Static("/static", "web/static")
-
-	// Public Pages (With optional session info)
-	public := s.e.Group("/api", authMiddleware.SessionMiddleware)
-	public.GET("/", homeHandler.HandleHome)
-	public.GET("/login", authHandler.HandleLoginPage)
-	public.GET("/register", authHandler.HandleRegisterPage)
-	public.POST("/auth/login", authHandler.HandleLoginSubmit)
-	public.POST("/auth/register", authHandler.HandleRegisterSubmit)
-
-	// SSO Routes
-	public.GET("/auth/google", ssoHandler.HandleGoogleLogin)
-	public.GET("/auth/google/callback", ssoHandler.HandleGoogleCallback)
-	public.GET("/auth/apple", ssoHandler.HandleAppleLogin)
-
-	// Protected Pages
-	protected := s.e.Group("/api", authMiddleware.AuthMiddleware)
-	protected.GET("/dashboard", homeHandler.HandleDashboard)
-	protected.GET("/dashboard/widgets", homeHandler.HandleDashboardWidgets)
-	protected.POST("/dashboard/layout", homeHandler.HandleSaveDashboardLayout)
-	protected.GET("/transactions", transactionHandler.HandleTransactions)
-	protected.GET("/transactions/list", transactionHandler.HandleGetList)
-	protected.POST("/transactions/bulk-add-tag", transactionHandler.HandleBulkAddTag)
-	protected.POST("/transactions/bulk-remove-tag", transactionHandler.HandleBulkRemoveTag)
-
-	protected.GET("/tags", tagHandler.HandleTags)
-	protected.GET("/tags/list", tagHandler.HandleTagList)
-	protected.POST("/tags/create", tagHandler.HandleCreateTag)
-	protected.PUT("/tags/:id", tagHandler.HandleUpdateTag)
-	protected.DELETE("/tags/:id", tagHandler.HandleDeleteTag)
-	protected.GET("/tags/:id/filters", tagHandler.HandleGetTagFilters)
-	protected.POST("/tags/:tag_id/move/:category_id", tagHandler.HandleMoveTag)
-
-	protected.POST("/categories/create", tagHandler.HandleCreateCategory)
-	protected.GET("/categories/options", tagHandler.HandleCategoryOptions)
-	protected.PUT("/categories/:id", tagHandler.HandleUpdateCategory)
-	protected.DELETE("/categories/:id", tagHandler.HandleDeleteCategory)
-	protected.POST("/categories/merge", tagHandler.HandleMergeCategories)
-
-	protected.GET("/settings", settingsHandler.HandleSettingsPage)
-	protected.GET("/manage", plaidHandler.HandleManagePage)
-	protected.GET("/manage/list", plaidHandler.HandleGetConnectionList)
-	protected.POST("/settings/theme", settingsHandler.HandleUpdateTheme)
-	protected.POST("/settings/account", settingsHandler.HandleUpdateAccount)
-	protected.POST("/settings/password", settingsHandler.HandleUpdatePassword)
-	protected.GET("/settings/plaid/bank-list", settingsHandler.HandleUpdateBankList)
-	protected.POST("/settings/unlink/:provider", settingsHandler.HandleUnlinkSSO)
-	protected.POST("/settings/plaid/remove/:id", settingsHandler.HandleRemoveBankAccount)
-	protected.GET("/settings/delete/init", settingsHandler.HandleDeleteAccountInit)
-	protected.GET("/settings/delete/check-reauth", settingsHandler.HandleDeleteAccountCheckReauth)
-	protected.POST("/settings/delete/verify", settingsHandler.HandleDeleteAccountVerify)
-	protected.POST("/settings/delete/confirm", settingsHandler.HandleDeleteAccountConfirm)
-	protected.GET("/settings/delete/cancel", settingsHandler.HandleDeleteAccountCancel)
-	protected.POST("/logout", authHandler.HandleLogout)
-
-	// Protected and Plaid Routes
-	plaidRoutes := protected.Group("/plaid")
-	plaidRoutes.POST("/create-link-token", plaidHandler.HandleCreateLinkToken)
-	plaidRoutes.POST("/exchange", plaidHandler.HandleExchangeToken)
-	plaidRoutes.POST("/sync", plaidHandler.HandleSync)
-	plaidRoutes.POST("/sync-item/:id", plaidHandler.HandleSyncItem)
-	plaidRoutes.POST("/create-update-token/:id", plaidHandler.HandleCreateUpdateLinkToken)
-	plaidRoutes.POST("/remove-account/:id", plaidHandler.HandleRemoveAccount)
-	plaidRoutes.POST("/toggle-visibility/:id", plaidHandler.HandleToggleAccountVisibility)
-
-	// Health check
 	s.e.GET("/health", func(c *echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
 }
-

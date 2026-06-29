@@ -6,9 +6,9 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-// maybeSyncStalePlaid runs a background sync for the user when any item is past the stale interval.
-func (m *AuthMiddleware) maybeSyncStalePlaid(c *echo.Context) {
-	if m.plaid == nil {
+// maybeSyncStaleConnections runs a background sync when any connection is past the stale interval.
+func (m *AuthMiddleware) maybeSyncStaleConnections(c *echo.Context) {
+	if m.provider == nil {
 		return
 	}
 	userIDVal := c.Get("user_id")
@@ -19,9 +19,9 @@ func (m *AuthMiddleware) maybeSyncStalePlaid(c *echo.Context) {
 	if !ok {
 		return
 	}
-	if !m.plaid.UserHasStaleItems(userID) {
+	if !m.provider.UserHasStaleItems(userID) {
 		return
 	}
 	ctx := context.Background()
-	go m.plaid.SyncStaleItems(ctx, userID)
+	go m.provider.SyncStaleItems(ctx, userID)
 }

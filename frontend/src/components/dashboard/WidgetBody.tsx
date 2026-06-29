@@ -2,9 +2,8 @@ import type { ApexOptions } from "apexcharts";
 import { For, Show, createSignal } from "solid-js";
 import ApexChart from "~/components/dashboard/ApexChart";
 import { SyncIcon } from "~/components/icons";
-import {
-  syncAllPlaidConnections,
-} from "~/lib/plaid";
+import { syncAllConnections } from "~/lib/connections";
+import { reportSyncError } from "~/lib/api-error";
 import {
   ACCOUNT_BUCKET_COPY,
   WIDGET_IDS,
@@ -28,6 +27,7 @@ import styles from "~/styles/dashboard.module.css";
 type WidgetBodyProps = {
   data: DashboardPayload;
   widgetId: string;
+  onSyncMessage?: (text: string, type: "ok" | "error" | "info") => void;
 };
 
 function chartBaseOptions(): ApexOptions {
@@ -466,9 +466,10 @@ export default function WidgetBody(props: WidgetBodyProps) {
       const handleSync = async () => {
         setSyncing(true);
         try {
-          await syncAllPlaidConnections();
+          await syncAllConnections();
+          props.onSyncMessage?.("All connections synced.", "ok");
         } catch (err) {
-          console.error("Sync failed:", err);
+          reportSyncError(err, (text, type) => props.onSyncMessage?.(text, type));
         } finally {
           setSyncing(false);
         }
@@ -487,7 +488,7 @@ export default function WidgetBody(props: WidgetBodyProps) {
               type="button"
               class={styles.primaryAction}
               disabled={syncing()}
-              onClick={handleSync}
+              onClick={() => void handleSync()}
             >
               <Show when={syncing()} fallback={<SyncIcon size={16} style={{ "margin-right": "0.5rem" }} />}>
                 <span class={styles.loadingSpinner} style={{ "margin-right": "0.5rem" }} />
@@ -513,5 +514,3 @@ export default function WidgetBody(props: WidgetBodyProps) {
       );
   }
 }
-
-export { widgetLabel };

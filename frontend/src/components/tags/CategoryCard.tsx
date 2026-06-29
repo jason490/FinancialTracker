@@ -8,28 +8,42 @@ import styles from "~/styles/tags.module.css";
 type CategoryCardProps = {
   category: CategoryWithTagsView;
   index: number;
+  draggingTag: TagView | null;
+  hoverCategoryId: number | null;
   onAddTag: (category: CategoryWithTagsView) => void;
   onEditTag: (tag: TagView) => void;
   onDeleteCategory: (category: CategoryWithTagsView) => void;
   onRefresh: () => void;
   onError: (message: string) => void;
+  onTagPointerDown: (tag: TagView, event: PointerEvent) => void;
 };
 
-// CategoryCard renders a category column with inline rename and tag pills.
+// CategoryCard renders a category column with inline rename, tag pills, and
+// drag-and-drop support for moving tags between categories.
 export default function CategoryCard(props: CategoryCardProps) {
+  // ── Rename state ───────────────────────────────────────────
   const [editingName, setEditingName] = createSignal(false);
   const [name, setName] = createSignal(props.category.name);
-  const [pending, setPending] = createSignal(false);
+  const [renamePending, setRenamePending] = createSignal(false);
+
+  const cancelEdit = () => {
+    setName(props.category.name);
+    setEditingName(false);
+  };
+
+  const startEdit = () => {
+    setName(props.category.name);
+    setEditingName(true);
+  };
 
   const saveName = async () => {
     const trimmed = name().trim();
     if (!trimmed || trimmed === props.category.name) {
-      setEditingName(false);
-      setName(props.category.name);
+      cancelEdit();
       return;
     }
 
-    setPending(true);
+    setRenamePending(true);
     try {
       await updateCategory(props.category.id, { name: trimmed });
       props.onRefresh();
@@ -38,10 +52,11 @@ export default function CategoryCard(props: CategoryCardProps) {
       props.onError(err instanceof Error ? err.message : "Failed to update category");
       setName(props.category.name);
     } finally {
-      setPending(false);
+      setRenamePending(false);
     }
   };
 
+  // ── Tag deletion ───────────────────────────────────────────
   const handleDeleteTag = async (tag: TagView) => {
     if (!window.confirm(`Delete tag "${tag.name}"?`)) return;
     try {
@@ -52,23 +67,30 @@ export default function CategoryCard(props: CategoryCardProps) {
     }
   };
 
+  // ── Drag & drop ────────────────────────────────────────────
+  // Drag state is owned by the page-level `useTagDrag` controller; this card
+  // only derives its visual state from the props it receives.
+  const isDropTarget = () =>
+    props.draggingTag != null && props.draggingTag.category_id !== props.category.id;
+
+  const isDropActive = () => isDropTarget() && props.hoverCategoryId === props.category.id;
+
   return (
     <article
-      class={styles.categoryCard}
+      classList={{
+        [styles.categoryCard]: true,
+        [styles.categoryCardDropTarget]: isDropTarget(),
+        [styles.categoryCardDropActive]: isDropActive(),
+      }}
       style={{ "animation-delay": `${props.index * 60}ms` }}
+      data-category-id={props.category.id}
     >
       <div class={styles.categoryHeader}>
         <div class={styles.categoryTitleWrap}>
           <Show
             when={editingName()}
             fallback={
-              <h2
-                class={styles.categoryName}
-                onDblClick={() => {
-                  setName(props.category.name);
-                  setEditingName(true);
-                }}
-              >
+              <h2 class={styles.categoryName} onDblClick={startEdit}>
                 {props.category.name}
               </h2>
             }
@@ -76,21 +98,18 @@ export default function CategoryCard(props: CategoryCardProps) {
             <input
               class={styles.categoryNameInput}
               value={name()}
-              disabled={pending()}
+              disabled={renamePending()}
               onInput={(event) => setName(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") void saveName();
-                if (event.key === "Escape") {
-                  setName(props.category.name);
-                  setEditingName(false);
-                }
+                else if (event.key === "Escape") cancelEdit();
               }}
             />
             <button
               type="button"
               class={styles.iconBtn}
               aria-label="Save category name"
-              disabled={pending()}
+              disabled={renamePending()}
               onClick={() => void saveName()}
             >
               <CheckIcon size={16} />
@@ -99,10 +118,7 @@ export default function CategoryCard(props: CategoryCardProps) {
               type="button"
               class={styles.iconBtn}
               aria-label="Cancel rename"
-              onClick={() => {
-                setName(props.category.name);
-                setEditingName(false);
-              }}
+              onClick={cancelEdit}
             >
               <XIcon size={16} />
             </button>
@@ -137,8 +153,13 @@ export default function CategoryCard(props: CategoryCardProps) {
           <For each={props.category.tags}>
             {(tag) => (
               <span
-                class={styles.tagChip}
+                classList={{
+                  [styles.tagChip]: true,
+                  [styles.tagChipDragging]: props.draggingTag?.id === tag.id,
+                }}
                 style={{ "--tag-color": tagColorHex(tag.color) }}
+                title="Drag to another category to move this tag"
+                onPointerDown={(event) => props.onTagPointerDown(tag, event)}
               >
                 <span class={styles.tagDot} />
                 <button

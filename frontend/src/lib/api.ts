@@ -1,4 +1,5 @@
 import { getPublicApiUrl, isCapacitorClient } from "./env";
+import { ClientApiError } from "./api-error";
 import type { APIError } from "./types";
 
 type RequestOptions = {
@@ -99,14 +100,23 @@ export async function clientApiRequest<T>(
 
   // Handle non-OK responses first to avoid parsing issues if the error is HTML
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      window.location.href = "/login";
+      // We throw a specific error that can be ignored or handled if needed,
+      // but the page reload will take over.
+      throw new Error("Session expired. Redirecting to login...");
+    }
+
     let errorMessage = `API Request failed with status ${response.status}`;
+    let errorCode = "request_failed";
     try {
       const errorData = await response.json() as APIError;
       errorMessage = errorData.message || errorMessage;
+      errorCode = errorData.code || errorCode;
     } catch (e) {
       // If parsing fails, we keep the default error message
     }
-    throw new Error(errorMessage);
+    throw new ClientApiError(errorMessage, response.status, errorCode);
   }
 
   // Handle OK responses

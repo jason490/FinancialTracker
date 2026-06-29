@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS plaid_items (
 -- Bank Accounts (Plaid)
 CREATE TABLE IF NOT EXISTS plaid_account (
     id INTEGER PRIMARY KEY,
+    row_id TEXT UNIQUE NOT NULL,
     user_id INTEGER NOT NULL,
     plaid_account_id TEXT UNIQUE NOT NULL,
     plaid_item_id TEXT NOT NULL,

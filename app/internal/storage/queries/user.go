@@ -8,14 +8,34 @@ import (
 // GetUserByEmail retrieves a user by their email address
 func GetUserByEmail(db *sql.DB, email string) (*models.User, error) {
     user := &models.User{}
-    query := `SELECT id, email, first_name, last_name, password_hash, theme_preference, created_at FROM users WHERE email = ?`
-    err := db.QueryRow(query, email).Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.PasswordHash, &user.ThemePreference, &user.CreatedAt)
+    query := `SELECT id, email, first_name, last_name, password_hash, theme_preference,
+              subscription_tier, subscription_started_at, stripe_customer_id, stripe_subscription_id,
+              onboarding_completed, created_at
+              FROM users WHERE email = ?`
+    var stripeCustomerID, stripeSubscriptionID sql.NullString
+    var subscriptionStartedAt sql.NullInt64
+    var onboardingCompleted int
+    err := db.QueryRow(query, email).Scan(
+        &user.ID, &user.Email, &user.FirstName, &user.LastName, &user.PasswordHash, &user.ThemePreference,
+        &user.SubscriptionTier, &subscriptionStartedAt, &stripeCustomerID, &stripeSubscriptionID,
+        &onboardingCompleted, &user.CreatedAt,
+    )
     if err == sql.ErrNoRows {
         return nil, nil
     }
     if err != nil {
         return nil, err
     }
+    if subscriptionStartedAt.Valid {
+        user.SubscriptionStartedAt = subscriptionStartedAt.Int64
+    }
+    if stripeCustomerID.Valid {
+        user.StripeCustomerID = stripeCustomerID.String
+    }
+    if stripeSubscriptionID.Valid {
+        user.StripeSubscriptionID = stripeSubscriptionID.String
+    }
+    user.OnboardingCompleted = onboardingCompleted != 0
     
     ssoQuery := `SELECT id, user_id, provider, sso_id, created_at FROM user_sso WHERE user_id = ?`
     rows, err := db.Query(ssoQuery, user.ID)
@@ -35,14 +55,34 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, error) {
 // GetUserByID retrieves a user by their ID
 func GetUserByID(db *sql.DB, id int64) (*models.User, error) {
     user := &models.User{}
-    query := `SELECT id, email, first_name, last_name, password_hash, theme_preference, created_at FROM users WHERE id = ?`
-    err := db.QueryRow(query, id).Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.PasswordHash, &user.ThemePreference, &user.CreatedAt)
+    query := `SELECT id, email, first_name, last_name, password_hash, theme_preference,
+              subscription_tier, subscription_started_at, stripe_customer_id, stripe_subscription_id,
+              onboarding_completed, created_at
+              FROM users WHERE id = ?`
+    var stripeCustomerID, stripeSubscriptionID sql.NullString
+    var subscriptionStartedAt sql.NullInt64
+    var onboardingCompleted int
+    err := db.QueryRow(query, id).Scan(
+        &user.ID, &user.Email, &user.FirstName, &user.LastName, &user.PasswordHash, &user.ThemePreference,
+        &user.SubscriptionTier, &subscriptionStartedAt, &stripeCustomerID, &stripeSubscriptionID,
+        &onboardingCompleted, &user.CreatedAt,
+    )
     if err == sql.ErrNoRows {
         return nil, nil
     }
     if err != nil {
         return nil, err
     }
+    if subscriptionStartedAt.Valid {
+        user.SubscriptionStartedAt = subscriptionStartedAt.Int64
+    }
+    if stripeCustomerID.Valid {
+        user.StripeCustomerID = stripeCustomerID.String
+    }
+    if stripeSubscriptionID.Valid {
+        user.StripeSubscriptionID = stripeSubscriptionID.String
+    }
+    user.OnboardingCompleted = onboardingCompleted != 0
 
     ssoQuery := `SELECT id, user_id, provider, sso_id, created_at FROM user_sso WHERE user_id = ?`
     rows, err := db.Query(ssoQuery, user.ID)
@@ -73,22 +113,50 @@ func GetUserBySSO(db *sql.DB, provider, ssoID string) (*models.User, error) {
     return GetUserByID(db, userID)
 }
 
+// GetUserSubscriptionTier returns the subscription tier for a user, defaulting to free.
+func GetUserSubscriptionTier(db *sql.DB, userID int64) (string, error) {
+	query := `SELECT COALESCE(subscription_tier, 'free') FROM users WHERE id = ?`
+	var tier string
+	err := db.QueryRow(query, userID).Scan(&tier)
+	if err == sql.ErrNoRows {
+		return models.SubscriptionTierFree, nil
+	}
+	if err != nil {
+		return "", err
+	}
+	if tier == "" {
+		return models.SubscriptionTierFree, nil
+	}
+	return tier, nil
+}
+
 // CreateUser creates a new user in the database
 func CreateUser(db *sql.DB, user *models.User) error {
-    if user.ThemePreference == "" {
-        user.ThemePreference = "system"
-    }
-    query := `INSERT INTO users (email, first_name, last_name, password_hash, theme_preference) VALUES (?, ?, ?, ?, ?)`
-    result, err := db.Exec(query, user.Email, user.FirstName, user.LastName, user.PasswordHash, user.ThemePreference)
-    if err != nil {
-        return err
-    }
-    id, err := result.LastInsertId()
-    if err != nil {
-        return err
-    }
-    user.ID = id
-    return nil
+	if user.ThemePreference == "" {
+		user.ThemePreference = "system"
+	}
+	if user.SubscriptionTier == "" {
+		user.SubscriptionTier = models.SubscriptionTierFree
+	}
+	query := `INSERT INTO users (email, first_name, last_name, password_hash, theme_preference, subscription_tier, onboarding_completed) VALUES (?, ?, ?, ?, ?, ?, 0)`
+	result, err := db.Exec(query, user.Email, user.FirstName, user.LastName, user.PasswordHash, user.ThemePreference, user.SubscriptionTier)
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	user.ID = id
+	user.OnboardingCompleted = false
+	return nil
+}
+
+// CompleteOnboarding marks the user's onboarding flow as finished.
+func CompleteOnboarding(db *sql.DB, userID int64) error {
+	query := `UPDATE users SET onboarding_completed = 1 WHERE id = ?`
+	_, err := db.Exec(query, userID)
+	return err
 }
 
 // LinkSSO links an SSO provider to a user

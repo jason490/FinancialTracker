@@ -1,22 +1,31 @@
 import { Title } from "@solidjs/meta";
 import { useSearchParams } from "@solidjs/router";
-import { Match, Show, Switch, createEffect, createResource, createSignal } from "solid-js";
+import { Show, createEffect, createResource, createSignal } from "solid-js";
+import LoadingCrossfade from "~/components/LoadingCrossfade";
+import PageStatusBanner, { type PageStatus } from "~/components/PageStatusBanner";
 import AccountPanel from "~/components/settings/AccountPanel";
+import AccountPanelSkeleton from "~/components/settings/AccountPanelSkeleton";
 import AppearancePanel from "~/components/settings/AppearancePanel";
 import ConnectionsPanel from "~/components/settings/ConnectionsPanel";
-import { BankIcon, PaletteIcon, UserIcon } from "~/components/icons";
+import DataPanel from "~/components/settings/DataPanel";
+import PlanPanel from "~/components/settings/PlanPanel";
+import { BankIcon, DatabaseIcon, PaletteIcon, UserIcon, CreditCardIcon } from "~/components/icons";
 import AppLayout from "~/layouts/AppLayout";
 import { useAuth } from "~/lib/auth-context";
+import { getConnections } from "~/lib/connections";
 import { getSettings } from "~/lib/settings";
+import { getSubscription } from "~/lib/subscription";
 import type { SettingsProfile } from "~/lib/types";
 import styles from "~/styles/settings.module.css";
 
-type SettingsTab = "account" | "connections" | "appearance";
+type SettingsTab = "account" | "connections" | "appearance" | "plan" | "data";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof UserIcon }> = [
   { id: "account", label: "Account", icon: UserIcon },
   { id: "connections", label: "Connections", icon: BankIcon },
   { id: "appearance", label: "Appearance", icon: PaletteIcon },
+  { id: "plan", label: "Plan", icon: CreditCardIcon },
+  { id: "data", label: "Data", icon: DatabaseIcon },
 ];
 
 // SettingsPage centralizes profile, security, Plaid, and theme preferences.
@@ -24,17 +33,23 @@ export default function SettingsPage() {
   const { user: sessionProfile, refetch: refetchAuth } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = createSignal<SettingsTab>("account");
-  const [message, setMessage] = createSignal<{ text: string; type: "ok" | "error" | "info" } | null>(
-    null
-  );
+  const [message, setMessage] = createSignal<PageStatus | null>(null);
   const [settings, { refetch: refetchSettings }] = createResource(
     sessionProfile,
     async () => getSettings()
   );
+  const [connections, { refetch: refetchConnections }] = createResource(getConnections);
+  const [subscription, { refetch: refetchSubscription }] = createResource(getSubscription);
 
   createEffect(() => {
     const tab = searchParams.tab;
-    if (tab === "account" || tab === "connections" || tab === "appearance") {
+    if (
+      tab === "account" ||
+      tab === "connections" ||
+      tab === "appearance" ||
+      tab === "plan" ||
+      tab === "data"
+    ) {
       setActiveTab(tab);
     }
   });
@@ -45,6 +60,18 @@ export default function SettingsPage() {
       void refetchSettings();
       void refetchAuth();
       setSearchParams({ tab: "account" }, { replace: true });
+    }
+  });
+
+  createEffect(() => {
+    const checkout = searchParams.checkout;
+    if (checkout === "success") {
+      setMessage({ text: "Subscription updated. It may take a moment to reflect.", type: "ok" });
+      void refetchSubscription();
+      setSearchParams({ tab: "plan" }, { replace: true });
+    } else if (checkout === "cancelled") {
+      setMessage({ text: "Checkout cancelled.", type: "info" });
+      setSearchParams({ tab: "plan" }, { replace: true });
     }
   });
 
@@ -92,7 +119,7 @@ export default function SettingsPage() {
 
   const selectTab = (tab: SettingsTab) => {
     setActiveTab(tab);
-    setSearchParams({ tab }, { replace: true });
+    setSearchParams({ tab }, { replace: true, scroll: false });
     setMessage(null);
   };
 
@@ -109,22 +136,7 @@ export default function SettingsPage() {
           </p>
         </header>
 
-        <Show when={message()}>
-          {(current) => (
-            <div
-              class={
-                current().type === "error"
-                  ? styles.statusError
-                  : current().type === "info"
-                    ? styles.statusInfo
-                    : styles.statusOk
-              }
-              role="status"
-            >
-              {current().text}
-            </div>
-          )}
-        </Show>
+        <PageStatusBanner message={message} onDismiss={() => setMessage(null)} />
 
         <div class={styles.layout}>
           <div class={styles.tabRail} role="tablist" aria-label="Settings sections">
@@ -146,42 +158,52 @@ export default function SettingsPage() {
           </div>
 
           <section class={styles.panel} role="tabpanel">
-            <Show
-              when={!settings.loading}
-              fallback={<div class={`${styles.panelInner} ${styles.tabPanel}`}>Loading settings...</div>}
+            <LoadingCrossfade
+              loading={() => settings.loading}
+              ready={() => settings() !== undefined}
+              skeleton={<AccountPanelSkeleton />}
             >
               <Show when={settings()}>
                 {(profile) => (
-                  <Show keyed when={activeTab()}>
-                    {(tab) => (
-                      <div class={styles.tabPanel}>
-                        <Switch>
-                          <Match when={tab === "account"}>
-                            <AccountPanel
-                              profile={profile()}
-                              onUpdated={handleUpdated}
-                              onMessage={handleMessage}
-                              reauthSuccess={reauthSuccess()}
-                              onReauthHandled={clearReauthParam}
-                            />
-                          </Match>
-                          <Match when={tab === "connections"}>
-                            <ConnectionsPanel onMessage={handleMessage} />
-                          </Match>
-                          <Match when={tab === "appearance"}>
-                            <AppearancePanel
-                              profile={profile()}
-                              onUpdated={handleUpdated}
-                              onMessage={handleMessage}
-                            />
-                          </Match>
-                        </Switch>
-                      </div>
-                    )}
-                  </Show>
+                  <div class={styles.tabPanel}>
+                    <Show when={activeTab() === "account"}>
+                      <AccountPanel
+                        profile={profile()}
+                        onUpdated={handleUpdated}
+                        onMessage={handleMessage}
+                        reauthSuccess={reauthSuccess()}
+                        onReauthHandled={clearReauthParam}
+                      />
+                    </Show>
+                    <Show when={activeTab() === "connections"}>
+                      <ConnectionsPanel
+                        connections={connections}
+                        refetchConnections={refetchConnections}
+                        onMessage={handleMessage}
+                      />
+                    </Show>
+                    <Show when={activeTab() === "appearance"}>
+                      <AppearancePanel
+                        profile={profile()}
+                        onUpdated={handleUpdated}
+                        onMessage={handleMessage}
+                      />
+                    </Show>
+                    <Show when={activeTab() === "plan"}>
+                      <PlanPanel
+                        subscription={subscription}
+                        refetchSubscription={refetchSubscription}
+                        connections={connections}
+                        onMessage={handleMessage}
+                      />
+                    </Show>
+                    <Show when={activeTab() === "data"}>
+                      <DataPanel onMessage={handleMessage} />
+                    </Show>
+                  </div>
                 )}
               </Show>
-            </Show>
+            </LoadingCrossfade>
           </section>
         </div>
       </div>

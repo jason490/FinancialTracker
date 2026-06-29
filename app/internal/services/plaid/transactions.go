@@ -60,6 +60,7 @@ func (p *PlaidService) parsePlaidTransaction(t plaid.Transaction, userID int64) 
 	}
 
 	return &models.Transaction{
+		Provider:           "plaid",
 		PlaidID:            acc.ID,
 		PlaidTransactionID: t.TransactionId,
 		Date:               unixDate,

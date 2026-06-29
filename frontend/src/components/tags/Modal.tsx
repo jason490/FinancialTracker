@@ -1,4 +1,4 @@
-import { ParentProps, Show } from "solid-js";
+import { ParentProps, Show, createUniqueId } from "solid-js";
 import { XIcon } from "~/components/icons";
 import styles from "~/styles/tags.module.css";
 
@@ -12,6 +12,8 @@ type ModalProps = ParentProps<{
 
 // Modal renders a centered overlay panel for tag management forms.
 export default function Modal(props: ModalProps) {
+  const titleId = createUniqueId();
+
   return (
     <Show when={props.open}>
       <div
@@ -25,11 +27,11 @@ export default function Modal(props: ModalProps) {
           class={`${styles.modalPanel} ${props.narrow ? styles.modalPanelNarrow : ""}`}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="tags-modal-title"
+          aria-labelledby={titleId}
         >
           <div class={styles.modalHeader}>
             <div>
-              <h2 id="tags-modal-title" class={styles.modalTitle}>
+              <h2 id={titleId} class={styles.modalTitle}>
                 {props.title}
               </h2>
               <Show when={props.subtitle}>

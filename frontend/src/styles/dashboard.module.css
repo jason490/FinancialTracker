@@ -131,6 +131,22 @@
   min-height: 0;
 }
 
+.gridItemReveal {
+  animation: widgetReveal 0.55s ease both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+@keyframes widgetReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .span2 {
   grid-column: span 1;
 }
@@ -561,6 +577,128 @@
   color: var(--text-muted);
 }
 
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.skeletonWidget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow);
+  animation: skeletonRise 0.55s ease both;
+  animation-delay: var(--skeleton-delay, 0ms);
+}
+
+.skeletonWidgetHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.skeletonBlock {
+  border-radius: 999px;
+  background: var(--border);
+  animation: shimmer 1.6s ease infinite;
+}
+
+.skeletonTitle {
+  width: 42%;
+  height: 1rem;
+}
+
+.skeletonAside {
+  width: 3.5rem;
+  height: 0.72rem;
+}
+
+.skeletonHeroBody {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.skeletonHeroValue {
+  width: 58%;
+  height: 2.4rem;
+  border-radius: 0.75rem;
+}
+
+.skeletonMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.skeletonMetricTile {
+  height: 3.4rem;
+  border-radius: 0.85rem;
+}
+
+.skeletonChartBody {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.skeletonChartArea {
+  width: 100%;
+  min-height: 220px;
+  border-radius: 0.95rem;
+}
+
+.skeletonListBody {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.skeletonListRow,
+.skeletonListRowShort {
+  height: 3.1rem;
+  border-radius: 0.85rem;
+}
+
+.skeletonListRowShort {
+  width: 72%;
+}
+
+.skeletonActionBody {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.skeletonActionButton,
+.skeletonActionButtonShort {
+  height: 2.75rem;
+  border-radius: 0.85rem;
+}
+
+.skeletonActionButtonShort {
+  width: 78%;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.38; }
+  50% { opacity: 0.78; }
+}
+
+@keyframes skeletonRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (min-width: 768px) {
   .cashflowGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -570,9 +708,14 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .grid {
+  .grid,
+  .skeletonGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
+  }
+
+  .skeletonMetricGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .span2 {
@@ -608,7 +751,8 @@
 }
 
 @media (min-width: 1024px) {
-  .grid {
+  .grid,
+  .skeletonGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 

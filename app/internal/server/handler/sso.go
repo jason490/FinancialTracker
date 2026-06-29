@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/services/auth"
 	"errors"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/gommon/log"
@@ -27,10 +27,6 @@ func NewSSOHandler(
 		googleOauthConfig: googleOauthConfig,
 		ssoService:        ssoService,
 	}
-}
-
-type ssoExchangeRequest struct {
-	Token string `json:"token"`
 }
 
 // HandleGoogleLogin redirects to Google's consent page for API clients.
@@ -81,7 +77,7 @@ func (h *SSOHandler) HandleGoogleCallback(c *echo.Context) error {
 			Value:    result.SessionID,
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   os.Getenv("ENV") != "development", // Set to true in production
+			Secure:   !config.IsDevelopment(),
 			SameSite: http.SameSiteLaxMode,
 			MaxAge:   60 * 60 * 24, // 1 day default for SSO
 		})

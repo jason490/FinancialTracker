@@ -47,7 +47,10 @@ func (p *PlaidService) applyItemStatusFromItemError(item plaid.ItemWithConsentFi
 }
 
 // fetchInstitutionDetails loads institution metadata from Plaid for an access token.
-func (p *PlaidService) fetchInstitutionDetails(ctx *context.Context, accessToken string) (string, string, string, error) {
+func (p *PlaidService) fetchInstitutionDetails(ctx *context.Context, userID int64, accessToken string) (string, string, string, error) {
+	if err := p.reservePlaidAPICall(userID); err != nil {
+		return "", "", "", err
+	}
 	itemRequest := plaid.NewItemGetRequest(accessToken)
 	itemResp, _, err := p.client.PlaidApi.ItemGet(*ctx).ItemGetRequest(*itemRequest).Execute()
 	if err != nil {
@@ -59,6 +62,9 @@ func (p *PlaidService) fetchInstitutionDetails(ctx *context.Context, accessToken
 	institutionName := ""
 	if val, ok := itemResp.Item.GetInstitutionIdOk(); ok && val != nil {
 		institutionID = *val
+		if err := p.reservePlaidAPICall(userID); err != nil {
+			return "", "", "", err
+		}
 		instReq := plaid.NewInstitutionsGetByIdRequest(institutionID, []plaid.CountryCode{plaid.COUNTRYCODE_US})
 		instResp, _, err := p.client.PlaidApi.InstitutionsGetById(*ctx).InstitutionsGetByIdRequest(*instReq).Execute()
 		if err == nil {
@@ -71,7 +77,10 @@ func (p *PlaidService) fetchInstitutionDetails(ctx *context.Context, accessToken
 }
 
 // RemovePlaidItemAtInstitution calls Plaid /item/remove to invalidate the access token.
-func (p *PlaidService) RemovePlaidItemAtInstitution(ctx *context.Context, accessToken string) error {
+func (p *PlaidService) RemovePlaidItemAtInstitution(ctx *context.Context, userID int64, accessToken string) error {
+	if err := p.reservePlaidAPICall(userID); err != nil {
+		return err
+	}
 	request := plaid.NewItemRemoveRequest(accessToken)
 	_, _, err := p.client.PlaidApi.ItemRemove(*ctx).ItemRemoveRequest(*request).Execute()
 	if err != nil {
@@ -89,7 +98,7 @@ func (p *PlaidService) DisconnectItem(ctx *context.Context, rowID string, userID
 	if err != nil {
 		return errors.New("failed to find bank connection")
 	}
-	if err := p.RemovePlaidItemAtInstitution(ctx, item.AccessToken); err != nil {
+	if err := p.RemovePlaidItemAtInstitution(ctx, userID, item.AccessToken); err != nil {
 		log.Errorf("Plaid item/remove failed for %s: %v", item.PlaidItemID, err)
 	}
 	return p.store.DeletePlaidItem(rowID, userID)

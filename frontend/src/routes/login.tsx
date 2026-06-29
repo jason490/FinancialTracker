@@ -1,18 +1,37 @@
 import { Title } from "@solidjs/meta";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate, useSearchParams } from "@solidjs/router";
 import { createSignal, Show } from "solid-js";
-import AuthLayout from "~/layouts/AuthLayout";
+import AuthLayout, { type AuthTransitionPhase } from "~/layouts/AuthLayout";
 import FormError from "~/components/auth/FormError";
 import SSOButtons from "~/components/auth/SSOButtons";
 import { login } from "~/lib/auth";
+import {
+  beginAuthTransition,
+  authTransitionActive,
+  prefetchDashboardForAuth,
+} from "~/lib/auth-transition";
 import { RedirectIfAuth, useAuth } from "~/lib/auth-context";
 import styles from "~/styles/auth.module.css";
 
+const SUCCESS_MS = 520;
+const EXIT_MS = 420;
+
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { refetch } = useAuth();
   const [error, setError] = createSignal<string | null>(null);
   const [pending, setPending] = createSignal(false);
+  const [transitionPhase, setTransitionPhase] = createSignal<AuthTransitionPhase>("idle");
+  const passwordResetSuccess = () => searchParams.reset === "success";
+
+  const dismissResetSuccess = () => {
+    if (searchParams.reset) {
+      setSearchParams({ reset: undefined }, { replace: true });
+    }
+  };
+
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -28,14 +47,21 @@ export default function LoginPage() {
 
     try {
       await login(data);
+      setTransitionPhase("success");
+      beginAuthTransition();
       await refetch();
+      await wait(SUCCESS_MS);
+      setTransitionPhase("exiting");
+      await Promise.all([wait(EXIT_MS), prefetchDashboardForAuth()]);
       navigate("/dashboard");
     } catch (err: any) {
+      setTransitionPhase("idle");
       setError(err.message || "Login failed");
-    } finally {
       setPending(false);
     }
   };
+
+  const isBusy = () => pending() || transitionPhase() !== "idle";
 
   return (
     <RedirectIfAuth>
@@ -43,6 +69,7 @@ export default function LoginPage() {
         eyebrow="Welcome back"
         title="Sign in"
         subtitle="Access your accounts, tags, and dashboard."
+        transitionPhase={transitionPhase()}
       >
         <Title>Sign In | Financial Tracker</Title>
 
@@ -52,6 +79,15 @@ export default function LoginPage() {
           <div class={styles.divider}>or email</div>
 
           <form onSubmit={handleSubmit} class={styles.form}>
+            <Show when={passwordResetSuccess()}>
+              <div class={styles.success} role="status">
+                Your password was reset. Sign in with your new password.
+                <button class={styles.inlineDismiss} type="button" onClick={dismissResetSuccess}>
+                  Dismiss
+                </button>
+              </div>
+            </Show>
+
             <div class={styles.field}>
               <label class={styles.label} for="email">
                 Email address
@@ -90,7 +126,7 @@ export default function LoginPage() {
               <a href="/forgot-password">Forgot password?</a>
             </div>
 
-            <button class={styles.button} type="submit" disabled={pending()}>
+            <button class={styles.button} type="submit" disabled={isBusy()}>
               <Show when={pending()} fallback="Sign in">
                 Signing in...
               </Show>

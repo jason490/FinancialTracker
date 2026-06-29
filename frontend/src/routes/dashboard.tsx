@@ -1,32 +1,79 @@
 import { Title } from "@solidjs/meta";
 import {
   Show,
+  createEffect,
   createResource,
   createSignal,
+  onCleanup,
   onMount,
 } from "solid-js";
 import AppLayout from "~/layouts/AppLayout";
+import PageStatusBanner, { type PageStatus } from "~/components/PageStatusBanner";
+import LoadingCrossfade from "~/components/LoadingCrossfade";
 import DashboardGrid from "~/components/dashboard/DashboardGrid";
+import { DashboardSkeletonGrid } from "~/components/dashboard/DashboardSkeletons";
 import { getDashboard } from "~/lib/dashboard";
+import {
+  authTransitionActive,
+  endAuthTransition,
+  takePrefetchedDashboard,
+} from "~/lib/auth-transition";
+import { useMinLoadingHold } from "~/lib/loading-transition";
 import { useAuth } from "~/lib/auth-context";
 import type { DashboardPayload } from "~/lib/types";
 import styles from "~/styles/dashboard.module.css";
 
 const HOLD_MS = 550;
+const TRANSITION_RELEASE_MS = 320;
 
 export default function DashboardPage() {
   const { user: profile } = useAuth();
+  const prefetchedDashboard = takePrefetchedDashboard();
   const [editMode, setEditMode] = createSignal(false);
-  const [dashboardData, setDashboardData] = createSignal<DashboardPayload>();
+  const [dashboardData, setDashboardData] = createSignal<DashboardPayload | undefined>(
+    prefetchedDashboard
+  );
+  const [message, setMessage] = createSignal<PageStatus | null>(null);
+
+  const handleSyncMessage = (text: string, type: PageStatus["type"]) => {
+    setMessage({ text, type });
+  };
 
   const [dashboard] = createResource(
     profile,
     async () => {
+      if (prefetchedDashboard) {
+        setDashboardData(prefetchedDashboard);
+        return prefetchedDashboard;
+      }
+
       const payload = await getDashboard(false);
       setDashboardData(payload);
       return payload;
     }
   );
+
+  const dashboardLoading = () => dashboard.loading && !prefetchedDashboard;
+  const dashboardReady = () => !!(dashboardData() ?? dashboard());
+  const holdingDashboard = useMinLoadingHold(dashboardLoading);
+
+  createEffect(() => {
+    if (!authTransitionActive()) {
+      return;
+    }
+
+    if (!dashboardReady() || dashboardLoading() || holdingDashboard()) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      endAuthTransition();
+    }, TRANSITION_RELEASE_MS);
+
+    onCleanup(() => {
+      window.clearTimeout(timer);
+    });
+  });
 
   let holdTimer: number | undefined;
 
@@ -125,17 +172,22 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <Show
-          when={!dashboard.loading && (dashboardData() || dashboard())}
-          fallback={<div class={styles.loadingState}>Loading dashboard...</div>}
+        <PageStatusBanner message={message} onDismiss={() => setMessage(null)} />
+
+        <LoadingCrossfade
+          loading={dashboardLoading}
+          ready={dashboardReady}
+          skeleton={<DashboardSkeletonGrid />}
         >
           <DashboardGrid
             data={() => dashboardData() ?? dashboard()}
             editMode={editMode}
             onSaved={handleSaved}
             onCancel={() => void exitEditMode()}
+            onSyncMessage={handleSyncMessage}
+            reveal
           />
-        </Show>
+        </LoadingCrossfade>
       </div>
     </AppLayout>
   );

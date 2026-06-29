@@ -1,8 +1,9 @@
 package models
 
-// Transaction represents a financial transaction
+// Transaction is a synced bank transaction stored for a user.
 type Transaction struct {
 	ID                 int64   `json:"id"`
+	Provider           string  `json:"provider"`
 	PlaidID            int64   `json:"plaid_id"`
 	PlaidTransactionID string  `json:"plaid_transaction_id"`
 	Date               int64   `json:"date"`
@@ -15,7 +16,7 @@ type Transaction struct {
 	Tags               []Tag   `json:"tags,omitempty"`
 }
 
-// TransactionFilters represents the filters for querying transactions
+// TransactionFilters scopes transaction list queries.
 type TransactionFilters struct {
 	Search     string
 	MinAmount  *float64
@@ -30,7 +31,7 @@ type TransactionFilters struct {
 	Offset     int
 }
 
-// TransactionPageData contains data specifically for the transactions page
+// TransactionPageData is the server-side transactions page view model.
 type TransactionPageData struct {
 	Transactions []Transaction
 	TotalCount   int

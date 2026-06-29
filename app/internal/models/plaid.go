@@ -3,6 +3,7 @@ package models
 // Account represents a bank account from Plaid
 type Account struct {
 	ID               int64   `json:"id"`
+	RowID            string  `json:"row_id"`
 	UserID           int64   `json:"user_id"`
 	PlaidAccountID   string  `json:"plaid_account_id"`
 	PlaidItemID      string  `json:"plaid_item_id"`

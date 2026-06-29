@@ -1,8 +1,3 @@
-// API_URL is used by SolidStart server functions to reach the Go API on the internal network.
-export function getApiUrl(): string {
-  return process.env.API_URL || "http://localhost:8080";
-}
-
 // API_PUBLIC_URL is used by the browser for SSO redirects and Capacitor builds.
 export function getPublicApiUrl(): string {
   if (typeof window !== "undefined") {

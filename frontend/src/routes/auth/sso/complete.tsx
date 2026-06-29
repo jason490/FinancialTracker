@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from "@solidjs/router";
 import { Show, onMount } from "solid-js";
 import AuthLayout from "~/layouts/AuthLayout";
 import { useAuth } from "~/lib/auth-context";
+import { postAuthPath } from "~/lib/auth";
+import { beginAuthTransition, endAuthTransition, prefetchDashboardForAuth } from "~/lib/auth-transition";
 import styles from "~/styles/auth.module.css";
 
 const errorMessages: Record<string, string> = {
@@ -24,13 +26,25 @@ export default function SSOCompletePage() {
     // Use the centralized refetch to verify the session and update global state.
     // The browser automatically includes the 'Session' cookie set during the redirect.
     try {
+      beginAuthTransition({
+        title: "Welcome aboard",
+        hint: "Setting up your workspace",
+      });
       const user = await refetch();
       if (user) {
-        navigate("/dashboard", { replace: true });
+        const destination = postAuthPath(user);
+        if (destination === "/dashboard") {
+          await prefetchDashboardForAuth();
+        } else {
+          endAuthTransition();
+        }
+        navigate(destination, { replace: true });
       } else {
+        endAuthTransition();
         navigate("/login", { replace: true });
       }
     } catch {
+      endAuthTransition();
       navigate("/login", { replace: true });
     }
   });

@@ -2,12 +2,14 @@ package external
 
 import "FinancialTracker/internal/models"
 
+// LoginRequest is the payload for email/password sign-in.
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Remember bool   `json:"remember"`
 }
 
+// RegisterRequest is the payload for creating a new account.
 type RegisterRequest struct {
 	FirstName       string `json:"first_name"`
 	LastName        string `json:"last_name"`
@@ -16,8 +18,23 @@ type RegisterRequest struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
+// ForgotPasswordRequest requests a password reset code.
 type ForgotPasswordRequest struct {
 	Email string `json:"email"`
+}
+
+// VerifyResetCodeRequest validates a password reset code.
+type VerifyResetCodeRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+// ResetPasswordRequest sets a new password after code verification.
+type ResetPasswordRequest struct {
+	Email           string `json:"email"`
+	Code            string `json:"code"`
+	NewPassword     string `json:"new_password"`
+	ConfirmPassword string `json:"confirm_password"`
 }
 
 // SaveDashboardLayoutRequest persists a dashboard widget layout from the SPA.

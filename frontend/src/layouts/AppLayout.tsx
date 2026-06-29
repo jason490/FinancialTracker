@@ -2,6 +2,7 @@ import { A, useLocation, useNavigate } from "@solidjs/router";
 import { ParentProps, createEffect, Show } from "solid-js";
 import { DashboardIcon, SettingsIcon, TagsIcon, TransactionsIcon } from "~/components/icons";
 import { useAuth } from "~/lib/auth-context";
+import { postAuthPath } from "~/lib/auth";
 import styles from "./AppLayout.module.css";
 
 export default function AppLayout(props: ParentProps) {
@@ -12,6 +13,16 @@ export default function AppLayout(props: ParentProps) {
   createEffect(() => {
     if (!auth.loading() && !auth.isAuthenticated()) {
       navigate("/login", { replace: true });
+      return;
+    }
+
+    const user = auth.user();
+    if (
+      user &&
+      !user.onboarding_completed &&
+      location.pathname !== "/onboarding"
+    ) {
+      navigate("/onboarding", { replace: true });
     }
   });
 

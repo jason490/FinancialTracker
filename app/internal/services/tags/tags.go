@@ -77,14 +77,6 @@ func (s *TaggingService) DeleteCategory(userID, categoryID int64, action string,
 	return s.store.DeleteCategory(userID, categoryID, targetCategoryID)
 }
 
-// MergeCategories merges source category into target category
-func (s *TaggingService) MergeCategories(userID, sourceID, targetID int64) error {
-	if sourceID == targetID {
-		return errors.New("cannot merge category into itself")
-	}
-	return s.store.MergeCategories(userID, sourceID, targetID)
-}
-
 // CreateTag handles duplicate checks, regex validation, and persistence for a new tag
 func (s *TaggingService) CreateTag(userID int64, categoryID int64, name, color string, filterPatterns, filterTypes []string, applyToPast bool) error {
 	if name == "" || categoryID == 0 {

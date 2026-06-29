@@ -8,9 +8,9 @@ import {
   type Accessor,
 } from "solid-js";
 import { DragHandle, EyeIcon, EyeOffIcon } from "~/components/icons";
-import WidgetBody, { widgetLabel } from "~/components/dashboard/WidgetBody";
+import WidgetBody from "~/components/dashboard/WidgetBody";
 import { saveDashboardLayout } from "~/lib/dashboard";
-import { widgetMeta, widgetsForRender } from "~/lib/dashboard-widgets";
+import { widgetLabel, widgetMeta, widgetsForRender } from "~/lib/dashboard-widgets";
 import type { DashboardPayload, DashboardWidget } from "~/lib/types";
 import styles from "~/styles/dashboard.module.css";
 
@@ -19,6 +19,8 @@ type DashboardGridProps = {
   editMode: Accessor<boolean>;
   onSaved: (payload: DashboardPayload) => void;
   onCancel: () => void;
+  onSyncMessage?: (text: string, type: "ok" | "error" | "info") => void;
+  reveal?: boolean;
 };
 
 // DashboardGrid renders the customizable widget grid with drag-and-drop edit mode.
@@ -42,6 +44,7 @@ export default function DashboardGrid(props: DashboardGridProps) {
   });
 
   createEffect(() => {
+    if (props.editMode()) return;
     const payload = props.data();
     if (payload) {
       const widgets = deviceType() === "mobile" ? payload.layout.mobile : payload.layout.desktop;
@@ -49,19 +52,27 @@ export default function DashboardGrid(props: DashboardGridProps) {
     }
   });
 
+  const readWidgetOrderFromDom = (): string[] => {
+    if (!gridRef) return [];
+    return Array.from(gridRef.children)
+      .map((node) => (node as HTMLElement).dataset.widgetId)
+      .filter((id): id is string => Boolean(id));
+  };
+
+  // syncOrderFromDom records Sortable's new order onto each widget's `order` field
+  // without touching the layout signal. Sortable already moved the DOM into the
+  // user's chosen order; skipping setLayout means Solid's `<For>` never reconciles
+  // on drop, so there is no flicker. handleSave reads `layout()` whose widget
+  // objects now carry the up-to-date `order` values.
   const syncOrderFromDom = () => {
-    if (!gridRef) return;
-    const ids = Array.from(gridRef.querySelectorAll("[data-widget-id]")).map(
-      (node) => (node as HTMLElement).dataset.widgetId!
-    );
-    setLayout((current) => {
-      const map = new Map(current.map((widget) => [widget.id, widget]));
-      return ids
-        .map((id, index) => {
-          const widget = map.get(id);
-          return widget ? { ...widget, order: index } : null;
-        })
-        .filter(Boolean) as DashboardWidget[];
+    const newIds = readWidgetOrderFromDom();
+    if (newIds.length === 0) return;
+
+    const widgets = layout();
+    const byId = new Map(widgets.map((widget) => [widget.id, widget]));
+    newIds.forEach((id, index) => {
+      const widget = byId.get(id);
+      if (widget) widget.order = index;
     });
   };
 
@@ -91,11 +102,13 @@ export default function DashboardGrid(props: DashboardGridProps) {
   onCleanup(() => destroySortable());
 
   const toggleVisibility = (id: string) => {
-    setLayout((current) =>
-      current.map((widget) =>
-        widget.id === id ? { ...widget, visible: !widget.visible } : widget
-      )
-    );
+    setLayout((current) => {
+      const widget = current.find((entry) => entry.id === id);
+      if (widget) {
+        widget.visible = !widget.visible;
+      }
+      return current.slice();
+    });
   };
 
   const handleSave = async () => {
@@ -154,7 +167,10 @@ export default function DashboardGrid(props: DashboardGridProps) {
                 return (
                 <div
                   class={styles.gridItem}
-                  classList={{ [styles.span2]: meta?.span === 2 }}
+                  classList={{
+                    [styles.span2]: meta?.span === 2,
+                    [styles.gridItemReveal]: props.reveal,
+                  }}
                   data-widget-id={widget.id}
                   data-visible={widget.visible ? "true" : "false"}
                   style={{
@@ -194,7 +210,11 @@ export default function DashboardGrid(props: DashboardGridProps) {
                     class={styles.widgetPreview}
                     classList={{ [styles.widgetHiddenPreview]: props.editMode() && !widget.visible }}
                   >
-                    <WidgetBody data={payload()} widgetId={widget.id} />
+                    <WidgetBody
+                      data={payload()}
+                      widgetId={widget.id}
+                      onSyncMessage={props.onSyncMessage}
+                    />
                   </div>
                 </div>
               );

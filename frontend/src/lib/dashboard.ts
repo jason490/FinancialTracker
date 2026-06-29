@@ -2,7 +2,7 @@ import { clientApiRequest } from "./api";
 import type { DashboardLayout, DashboardPayload, DashboardWidget } from "./types";
 
 // normalizeDashboardPayload coalesces nullable API arrays to empty lists.
-export function normalizeDashboardPayload(payload: DashboardPayload): DashboardPayload {
+function normalizeDashboardPayload(payload: DashboardPayload): DashboardPayload {
   return {
     ...payload,
     groups: payload.groups ?? {},

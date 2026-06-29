@@ -20,9 +20,9 @@ func NewDashboardHandler(dashService *dashboard.DashboardService) *DashboardHand
 
 // HandleDashboardGet returns the dashboard payload for the authenticated user.
 func (h *DashboardHandler) HandleDashboardGet(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	editMode := c.QueryParam("edit") == "1"
@@ -36,9 +36,9 @@ func (h *DashboardHandler) HandleDashboardGet(c *echo.Context) error {
 
 // HandleSaveLayout persists a customized dashboard layout for a specific device.
 func (h *DashboardHandler) HandleSaveLayout(c *echo.Context) error {
-	userID, ok := c.Get("user_id").(int64)
-	if !ok || userID == 0 {
-		return c.JSON(http.StatusUnauthorized, ErrorResponse("unauthorized", "Not authenticated"))
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
 	}
 
 	var req external.SaveDashboardLayoutRequest

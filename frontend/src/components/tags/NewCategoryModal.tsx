@@ -1,4 +1,4 @@
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
 import Modal from "~/components/tags/Modal";
 import { createCategory } from "~/lib/tags";
 import styles from "~/styles/tags.module.css";
@@ -42,11 +42,11 @@ export default function NewCategoryModal(props: NewCategoryModalProps) {
   return (
     <Modal open={props.open} title="New Category" narrow onClose={props.onClose}>
       <div class={styles.formGrid}>
-        {error() && (
+        <Show when={error()}>
           <div class={styles.statusError} role="alert">
             {error()}
           </div>
-        )}
+        </Show>
         <div class={styles.field}>
           <label class={styles.label} for="category-name">
             Category Name

@@ -15,19 +15,19 @@ func TestBuildAndParseAPIOAuthState(t *testing.T) {
 		t.Fatalf("BuildAPIOAuthState() returned error state")
 	}
 
-	parsed, err := svc.ParseAPIReturnTo(state)
+	parsed, err := svc.ParseAPIState(state)
 	if err != nil {
-		t.Fatalf("ParseAPIReturnTo() error = %v", err)
+		t.Fatalf("ParseAPIState() error = %v", err)
 	}
-	if parsed != returnTo {
-		t.Fatalf("ParseAPIReturnTo() = %q, want %q", parsed, returnTo)
+	if parsed.ReturnTo != returnTo {
+		t.Fatalf("ParseAPIState() returnTo = %q, want %q", parsed.ReturnTo, returnTo)
 	}
 }
 
-func TestParseAPIReturnToRejectsInvalidState(t *testing.T) {
+func TestParseAPIStateRejectsInvalidState(t *testing.T) {
 	svc := NewSSOService(nil)
 
-	if _, err := svc.ParseAPIReturnTo("state-token"); err != ErrInvalidOAuthState {
-		t.Fatalf("ParseAPIReturnTo() error = %v, want ErrInvalidOAuthState", err)
+	if _, err := svc.ParseAPIState("state-token"); err != ErrInvalidOAuthState {
+		t.Fatalf("ParseAPIState() error = %v, want ErrInvalidOAuthState", err)
 	}
 }

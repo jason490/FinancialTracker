@@ -2,11 +2,13 @@ package plaid
 
 import (
 	"FinancialTracker/internal/models"
+	"FinancialTracker/internal/services/subscription"
 	"FinancialTracker/internal/services/tags"
 	"FinancialTracker/internal/storage"
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/gommon/log"
@@ -14,12 +16,14 @@ import (
 )
 
 type PlaidService struct {
-	client *plaid.APIClient
-	store  *storage.Storage
-	tagService *tags.TaggingService
+	client         *plaid.APIClient
+	store          *storage.Storage
+	tagService     *tags.TaggingService
+	subscription   *subscription.Service
+	webhookKeyCache webhookKeyCache
 }
 
-func NewPlaidService(store *storage.Storage, tagService *tags.TaggingService) *PlaidService {
+func NewPlaidService(store *storage.Storage, tagService *tags.TaggingService, sub *subscription.Service) *PlaidService {
 	clientID := os.Getenv("PLAID_CLIENT_ID")
 	env := os.Getenv("PLAID_ENV")
 
@@ -45,16 +49,24 @@ func NewPlaidService(store *storage.Storage, tagService *tags.TaggingService) *P
 	client := plaid.NewAPIClient(configuration)
 
 	return &PlaidService{
-		client: client,
-		store:  store,
-		tagService: tagService,
+		client:       client,
+		store:        store,
+		tagService:   tagService,
+		subscription: sub,
 	}
 }
 
 // CreateLinkToken generates a new Plaid Link token for the user to initialize the bank connection flow.
-func (p *PlaidService) CreateLinkToken(c *echo.Context, userId string) (string, error) {
+func (p *PlaidService) CreateLinkToken(c *echo.Context, userID int64) (string, error) {
+	if err := p.ensureItemLimitAvailable(userID); err != nil {
+		return "", err
+	}
+	if err := p.reservePlaidAPICall(userID); err != nil {
+		return "", err
+	}
+
 	user := plaid.LinkTokenCreateRequestUser{
-		ClientUserId: userId,
+		ClientUserId: strconv.FormatInt(userID, 10),
 	}
 	request := plaid.NewLinkTokenCreateRequest(
 		"Financial Tracker",
@@ -63,6 +75,9 @@ func (p *PlaidService) CreateLinkToken(c *echo.Context, userId string) (string, 
 	)
 	request.SetUser(user)
 	request.SetProducts([]plaid.Products{plaid.PRODUCTS_TRANSACTIONS})
+	if url := p.webhookURL(); url != "" {
+		request.SetWebhook(url)
+	}
 
 	resp, _, err := p.client.PlaidApi.LinkTokenCreate(c.Request().Context()).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
@@ -72,12 +87,16 @@ func (p *PlaidService) CreateLinkToken(c *echo.Context, userId string) (string, 
 }
 
 // CreateUpdateLinkToken generates a link token for an existing item to fix its connection or modify its shared accounts.
-func (p *PlaidService) CreateUpdateLinkToken(c *echo.Context, userID string, accessToken string, itemStatus string) (string, error) {
+func (p *PlaidService) CreateUpdateLinkToken(c *echo.Context, userID int64, accessToken string, itemStatus string) (string, error) {
 	if itemStatus == ItemStatusDisconnected {
 		return "", errors.New("this bank connection is no longer available; please disconnect and link again")
 	}
+	if err := p.reservePlaidAPICall(userID); err != nil {
+		return "", err
+	}
+
 	user := plaid.LinkTokenCreateRequestUser{
-		ClientUserId: userID,
+		ClientUserId: strconv.FormatInt(userID, 10),
 	}
 	request := plaid.NewLinkTokenCreateRequest(
 		"Financial Tracker",
@@ -91,10 +110,13 @@ func (p *PlaidService) CreateUpdateLinkToken(c *echo.Context, userID string, acc
 	update := plaid.NewLinkTokenCreateRequestUpdate()
 	update.SetAccountSelectionEnabled(true)
 	request.SetUpdate(*update)
+	if url := p.webhookURL(); url != "" {
+		request.SetWebhook(url)
+	}
 
 	resp, _, err := p.client.PlaidApi.LinkTokenCreate(c.Request().Context()).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
-		log.Errorf("Failed to create update link token for user %s: %v", userID, err)
+		log.Errorf("Failed to create update link token for user %d: %v", userID, err)
 		return "", err
 	}
 	return resp.GetLinkToken(), nil
@@ -104,6 +126,10 @@ func (p *PlaidService) CreateUpdateLinkToken(c *echo.Context, userID string, acc
 // It also triggers the initial account and transaction sync.
 func (p *PlaidService) ExchangeToken(c *echo.Context, userID int64, publicToken string) error {
 	ctx := c.Request().Context()
+
+	if err := p.reservePlaidAPICall(userID); err != nil {
+		return err
+	}
 	exchangeRequest := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 	exchangeResp, _, err := p.client.PlaidApi.ItemPublicTokenExchange(ctx).ItemPublicTokenExchangeRequest(*exchangeRequest).Execute()
 	if err != nil {
@@ -125,6 +151,9 @@ func (p *PlaidService) ExchangeToken(c *echo.Context, userID int64, publicToken 
 			return err
 		}
 	} else {
+		if err := p.ensureItemLimitAvailable(userID); err != nil {
+			return err
+		}
 		// Create new item
 		if err := p.CreatePlaidItem(&ctx, userID, itemID, accessToken); err != nil {
 			return err
@@ -134,16 +163,21 @@ func (p *PlaidService) ExchangeToken(c *echo.Context, userID int64, publicToken 
 	return p.syncItems(&ctx, userID, true)
 }
 
-// GetManagementData fetches all connections and their accounts for a user
-func (p *PlaidService) GetManagementData(userID int64) ([]models.PlaidItemWithAccounts, error) {
+// GetManagementData fetches all connections and their accounts for a user.
+func (p *PlaidService) GetManagementData(userID int64) ([]models.PlaidItemWithAccounts, *models.PlaidUsage, error) {
 	items, err := p.store.GetPlaidItemsByUserID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch plaid items: %w", err)
+		return nil, nil, fmt.Errorf("failed to fetch plaid items: %w", err)
 	}
 
 	accounts, err := p.store.GetPlaidAccountsByUserID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch plaid accounts: %w", err)
+		return nil, nil, fmt.Errorf("failed to fetch plaid accounts: %w", err)
+	}
+
+	usage, err := p.GetPlaidUsage(userID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch plaid usage: %w", err)
 	}
 
 	groupedItems := make([]models.PlaidItemWithAccounts, len(items))
@@ -159,7 +193,7 @@ func (p *PlaidService) GetManagementData(userID int64) ([]models.PlaidItemWithAc
 		}
 	}
 
-	return groupedItems, nil
+	return groupedItems, usage, nil
 }
 
 // DeletePlaidAccount removes a specific bank account if it is disconnected
@@ -168,7 +202,7 @@ func (p *PlaidService) DeletePlaidAccount(userID int64, accountID string) error 
 		return errors.New("invalid account ID")
 	}
 
-	account, err := p.store.GetAccountByPlaidAccountID(accountID)
+	account, err := p.store.GetAccountByRowID(accountID)
 	if err != nil || account.UserID != userID {
 		return errors.New("account not found")
 	}

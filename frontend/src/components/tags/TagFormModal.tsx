@@ -1,17 +1,19 @@
 import { createEffect, createSignal, Show } from "solid-js";
-import Modal from "~/components/tags/Modal";
 import FilterEditor from "~/components/tags/FilterEditor";
+import Modal from "~/components/tags/Modal";
 import TagColorPicker from "~/components/tags/TagColorPicker";
 import { defaultTagColor } from "~/lib/tag-colors";
 import { createTag, getTagFilters, updateTag } from "~/lib/tags";
 import type { CategoryWithTagsView, TagFilterView, TagView } from "~/lib/types";
 import styles from "~/styles/tags.module.css";
 
+export type TagFormState =
+  | { open: false }
+  | { open: true; mode: "create"; category?: CategoryWithTagsView }
+  | { open: true; mode: "edit"; tag: TagView };
+
 type TagFormModalProps = {
-  open: boolean;
-  mode: "create" | "edit";
-  category?: CategoryWithTagsView;
-  tag?: TagView;
+  state: TagFormState;
   categories: CategoryWithTagsView[];
   onClose: () => void;
   onSaved: () => void;
@@ -28,33 +30,45 @@ export default function TagFormModal(props: TagFormModalProps) {
   const [pending, setPending] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
 
+  const title = () => {
+    const state = props.state;
+    if (!state.open) return "";
+    if (state.mode === "create") {
+      return `Add Tag${state.category ? ` to ${state.category.name}` : ""}`;
+    }
+    return `Edit Tag: ${state.tag.name}`;
+  };
+
+  // Reset form when the modal opens; load filters when editing.
   createEffect(() => {
-    if (!props.open) return;
+    const state = props.state;
+    if (!state.open) return;
 
     setError(null);
-    if (props.mode === "create") {
+    setFilters([]);
+
+    if (state.mode === "create") {
       setName("");
       setColor(defaultTagColor());
-      setCategoryId(props.category?.id ?? props.categories[0]?.id ?? 0);
-      setFilters([]);
+      setCategoryId(state.category?.id ?? props.categories[0]?.id ?? 0);
       return;
     }
 
-    const tag = props.tag;
-    if (!tag) return;
-
+    const tag = state.tag;
     setName(tag.name);
     setColor(tag.color || defaultTagColor());
     setCategoryId(tag.category_id);
-    setFilters([]);
     setLoadingFilters(true);
     void getTagFilters(tag.id)
-      .then((loaded) => setFilters(loaded))
+      .then(setFilters)
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load filters"))
       .finally(() => setLoadingFilters(false));
   });
 
   const submit = async (apply: boolean) => {
+    const state = props.state;
+    if (!state.open) return;
+
     setPending(true);
     setError(null);
     try {
@@ -62,14 +76,14 @@ export default function TagFormModal(props: TagFormModalProps) {
         name: name().trim(),
         color: color(),
         category_id: categoryId(),
-        filters: filters().filter((filter) => filter.pattern.trim() !== ""),
+        filters: filters().filter((f) => f.pattern.trim() !== ""),
         apply,
       };
 
-      if (props.mode === "create") {
+      if (state.mode === "create") {
         await createTag(payload);
-      } else if (props.tag) {
-        await updateTag(props.tag.id, payload);
+      } else {
+        await updateTag(state.tag.id, payload);
       }
 
       props.onSaved();
@@ -83,13 +97,10 @@ export default function TagFormModal(props: TagFormModalProps) {
     }
   };
 
-  const title =
-    props.mode === "create"
-      ? `Add Tag${props.category ? ` to ${props.category.name}` : ""}`
-      : `Edit Tag: ${props.tag?.name ?? ""}`;
+  const canSubmit = () => !pending() && name().trim().length > 0;
 
   return (
-    <Modal open={props.open} title={title} onClose={props.onClose}>
+    <Modal open={props.state.open} title={title()} onClose={props.onClose}>
       <div class={styles.formGrid}>
         <Show when={error()}>
           <div class={styles.statusError} role="alert">
@@ -144,7 +155,7 @@ export default function TagFormModal(props: TagFormModalProps) {
         <button
           type="button"
           class={styles.primaryBtn}
-          disabled={pending() || !name().trim()}
+          disabled={!canSubmit()}
           onClick={() => void submit(false)}
         >
           Save Tag
@@ -152,7 +163,7 @@ export default function TagFormModal(props: TagFormModalProps) {
         <button
           type="button"
           class={`${styles.primaryBtn} ${styles.successBtn}`}
-          disabled={pending() || !name().trim()}
+          disabled={!canSubmit()}
           onClick={() => void submit(true)}
         >
           Save & Apply

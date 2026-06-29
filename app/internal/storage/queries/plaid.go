@@ -12,9 +12,12 @@ func CreatePlaidAccount(db *sql.DB, a *models.Account) error {
     if a.Status == "" {
         a.Status = "active"
     }
-    query := `INSERT INTO plaid_account (user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    result, err := db.Exec(query, a.UserID, a.PlaidAccountID, a.PlaidItemID, a.Name, a.Mask, a.Type, a.Subtype, a.Balance, a.AvailableBalance, a.Currency, a.Status, a.IsHidden, a.MonthlyPayment)
+	if a.RowID == "" {
+		a.RowID = uuid.New().String()
+	}
+    query := `INSERT INTO plaid_account (user_id, row_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    result, err := db.Exec(query, a.UserID, a.RowID, a.PlaidAccountID, a.PlaidItemID, a.Name, a.Mask, a.Type, a.Subtype, a.Balance, a.AvailableBalance, a.Currency, a.Status, a.IsHidden, a.MonthlyPayment)
     if err != nil {
         return err
     }
@@ -183,7 +186,7 @@ func UpdatePlaidItemCursor(db *sql.DB, itemID string, cursor string) error {
 
 // GetPlaidAccountsByUserID retrieves all plaid accounts for a specific user
 func GetPlaidAccountsByUserID(db *sql.DB, userID int64) ([]models.Account, error) {
-    query := `SELECT id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE user_id = ?`
+    query := `SELECT id, row_id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE user_id = ?`
     rows, err := db.Query(query, userID)
     if err != nil {
         return nil, err
@@ -193,7 +196,7 @@ func GetPlaidAccountsByUserID(db *sql.DB, userID int64) ([]models.Account, error
     var plaidAccounts []models.Account
     for rows.Next() {
         var a models.Account
-        if err := rows.Scan(&a.ID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt); err != nil {
+        if err := rows.Scan(&a.ID, &a.RowID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt); err != nil {
             return nil, err
         }
         plaidAccounts = append(plaidAccounts, a)
@@ -201,11 +204,22 @@ func GetPlaidAccountsByUserID(db *sql.DB, userID int64) ([]models.Account, error
     return plaidAccounts, nil
 }
 
+// GetAccountByRowID retrieves an account by its row_id
+func GetAccountByRowID(db *sql.DB, rowID string) (*models.Account, error) {
+    query := `SELECT id, row_id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE row_id = ?`
+    var a models.Account
+    err := db.QueryRow(query, rowID).Scan(&a.ID, &a.RowID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt)
+    if err != nil {
+        return nil, err
+    }
+    return &a, nil
+}
+
 // GetAccountByPlaidAccountID retrieves an account by its plaid_account_id
 func GetAccountByPlaidAccountID(db *sql.DB, plaidAccountID string) (*models.Account, error) {
-    query := `SELECT id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE plaid_account_id = ?`
+    query := `SELECT id, row_id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE plaid_account_id = ?`
     var a models.Account
-    err := db.QueryRow(query, plaidAccountID).Scan(&a.ID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt)
+    err := db.QueryRow(query, plaidAccountID).Scan(&a.ID, &a.RowID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt)
     if err != nil {
         return nil, err
     }
@@ -214,7 +228,7 @@ func GetAccountByPlaidAccountID(db *sql.DB, plaidAccountID string) (*models.Acco
 
 // GetPlaidAccountsByItemID retrieves all plaid accounts for a specific plaid item ID
 func GetPlaidAccountsByItemID(db *sql.DB, itemID string) ([]models.Account, error) {
-	query := `SELECT id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE plaid_item_id = ?`
+	query := `SELECT id, row_id, user_id, plaid_account_id, plaid_item_id, name, mask, type, subtype, balance, available_balance, currency, status, is_hidden, monthly_payment, created_at FROM plaid_account WHERE plaid_item_id = ?`
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		return nil, err
@@ -224,7 +238,7 @@ func GetPlaidAccountsByItemID(db *sql.DB, itemID string) ([]models.Account, erro
 	var plaidAccounts []models.Account
 	for rows.Next() {
 		var a models.Account
-		if err := rows.Scan(&a.ID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt); err != nil {
+		if err := rows.Scan(&a.ID, &a.RowID, &a.UserID, &a.PlaidAccountID, &a.PlaidItemID, &a.Name, &a.Mask, &a.Type, &a.Subtype, &a.Balance, &a.AvailableBalance, &a.Currency, &a.Status, &a.IsHidden, &a.MonthlyPayment, &a.CreatedAt); err != nil {
 			return nil, err
 		}
 		plaidAccounts = append(plaidAccounts, a)
@@ -246,6 +260,14 @@ func UpdatePlaidAccountStatus(db *sql.DB, accountID string, status string) error
 	return err
 }
 
+// CountActivePlaidItems returns how many non-disconnected Plaid items a user has linked.
+func CountActivePlaidItems(db *sql.DB, userID int64) (int, error) {
+	query := `SELECT COUNT(*) FROM plaid_items WHERE user_id = ? AND status != 'disconnected'`
+	var count int
+	err := db.QueryRow(query, userID).Scan(&count)
+	return count, err
+}
+
 // DeletePlaidItem deletes a plaid item by its Row ID and User ID for security
 func DeletePlaidItem(db *sql.DB, rowID string, userID int64) error {
 	query := `DELETE FROM plaid_items WHERE row_id = ? AND user_id = ?`
@@ -255,14 +277,14 @@ func DeletePlaidItem(db *sql.DB, rowID string, userID int64) error {
 
 // DeletePlaidAccount deletes a specific plaid account and its transactions
 func DeletePlaidAccount(db *sql.DB, accountID string, userID int64) error {
-	query := `DELETE FROM plaid_account WHERE plaid_account_id = ? AND user_id = ?`
+	query := `DELETE FROM plaid_account WHERE row_id = ? AND user_id = ?`
 	_, err := db.Exec(query, accountID, userID)
 	return err
 }
 
 // ToggleAccountVisibility flips the is_hidden status of a plaid account and returns the new state
 func ToggleAccountVisibility(db *sql.DB, accountID string, userID int64) (bool, error) {
-    query := `UPDATE plaid_account SET is_hidden = NOT is_hidden WHERE plaid_account_id = ? AND user_id = ? RETURNING is_hidden`
+    query := `UPDATE plaid_account SET is_hidden = NOT is_hidden WHERE row_id = ? AND user_id = ? RETURNING is_hidden`
     var isHidden bool
     err := db.QueryRow(query, accountID, userID).Scan(&isHidden)
     return isHidden, err

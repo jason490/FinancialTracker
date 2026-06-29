@@ -5,95 +5,8 @@ export type APIError = {
   message: string;
 };
 
-export type ActionResult<T = unknown> = {
-  data?: T;
-  error?: string;
-  errorCode?: string;
-};
-
-export type Category = {
-  id: number;
-  user_id: number;
-  name: string;
-  created_at: number;
-};
-
-export type Tag = {
-  id: number;
-  category_id: number;
-  name: string;
-  color: string;
-  created_at: number;
-};
-
-export type TagFilter = {
-  id: number;
-  user_id: number;
-  tag_id: number;
-  pattern: string;
-  filter_type: string;
-  created_at: number;
-};
-
-export type CategoryWithTags = {
-  Tags: Tag[];
-};
-
-export type TagBreakdown = {
-  tag_id: number;
-  tag_name: string;
-  color: string;
-  total: number;
-};
-
-export type DashboardWidget = {
-  id: string;
-  visible: boolean;
-  order: number;
-};
-
-export type DashboardLayout = {
-  desktop: DashboardWidget[];
-  mobile: DashboardWidget[];
-};
-
-export type MonthlySpend = {
-  month: string;
-  total: number;
-};
-
-export type MonthCashflow = {
-  spend: number;
-  income: number;
-};
-
-export type DashboardSummary = {
-  net_worth: number;
-  cash: number;
-  savings: number;
-  credit_debt: number;
-  loan_debt: number;
-  loan_monthly_payments: number;
-  investments: number;
-  account_count: number;
-  avg_monthly_spend: number;
-  months_to_zero: number;
-};
-
-export type DashboardData = {
-  summary: DashboardSummary;
-  groups: any;
-  transactions: Transaction[];
-  spending_trend: MonthlySpend[];
-  month_cashflow: MonthCashflow;
-  spending_by_tag: TagBreakdown[];
-  income_by_tag: TagBreakdown[];
-  layout: DashboardLayout;
-  edit_mode: boolean;
-};
-
-export type PlaidAccountView = {
-  plaid_account_id: string;
+export type ConnectionAccountView = {
+  account_id: string;
   name: string;
   mask: string;
   subtype: string;
@@ -103,25 +16,34 @@ export type PlaidAccountView = {
   is_hidden: boolean;
 };
 
-export type PlaidConnectionView = {
+export type ConnectionView = {
   row_id: string;
   institution_name: string;
   status: string;
   created_at: number;
   last_synced: number;
-  accounts: PlaidAccountView[];
+  accounts: ConnectionAccountView[];
 };
 
-export type PlaidConnectionsPayload = {
-  connections: PlaidConnectionView[];
+export type ConnectionsPayload = {
+  provider: string;
+  connections: ConnectionView[];
+  usage: PlaidUsage;
 };
 
-export type PlaidLinkTokenResponse = {
-  link_token: string;
+export type ProviderInfoResponse = {
+  provider: string;
+  publishable_key?: string;
 };
 
-export type PlaidExchangeRequest = {
-  public_token: string;
+export type CreateSessionResponse = {
+  link_token?: string;
+  client_secret?: string;
+};
+
+export type CompleteConnectionRequest = {
+  public_token?: string;
+  session_id?: string;
 };
 
 export type LoginRequest = {
@@ -140,6 +62,18 @@ export type RegisterRequest = {
 
 export type ForgotPasswordRequest = {
   email: string;
+};
+
+export type VerifyResetCodeRequest = {
+  email: string;
+  code: string;
+};
+
+export type ResetPasswordRequest = {
+  email: string;
+  code: string;
+  new_password: string;
+  confirm_password: string;
 };
 
 export type SaveDashboardLayoutRequest = {
@@ -190,11 +124,21 @@ export type DeleteCategoryRequest = {
   target_category_id?: number;
 };
 
+export type ForgotPasswordResponse = {
+  message: string;
+  code_expires_in_seconds: number;
+};
+
+export type VerifyResetCodeResponse = {
+  expires_at: number;
+};
+
 export type SessionProfile = {
   first_name: string;
   last_name: string;
   email: string;
   theme_preference: string;
+  onboarding_completed: boolean;
 };
 
 export type DashboardAccountView = {
@@ -227,9 +171,11 @@ export type TagSliceView = {
   total: number;
 };
 
+export type DashboardAccountGroups = Record<string, DashboardAccountView[]>;
+
 export type DashboardPayload = {
   summary: DashboardSummary;
-  groups: any;
+  groups: DashboardAccountGroups;
   transactions: DashboardTransactionView[];
   spending_trend: MonthlySpend[];
   month_cashflow: MonthCashflow;
@@ -332,116 +278,108 @@ export type DeleteAccountReauthStatusResponse = {
   reauth_verified: boolean;
 };
 
-export type Notification = {
-  message: string;
-  type: string;
+export type SubscriptionPayload = {
+  tier: string;
+  billing: BillingPeriod;
+  limits: PlaidLimits;
+  plans: TierPlan[];
+  stripe_configured: boolean;
+  billing_enabled: boolean;
+  has_active_subscription: boolean;
+  can_change_plan: boolean;
+  privileges: SubscriptionPrivileges;
 };
 
-export type PageData = {
-  user: User;
-  title: string;
-  data: any;
-  reauth_success: boolean;
-  notifications?: Notification[];
+export type CheckoutSessionRequest = {
+  tier: string;
 };
 
-export type Account = {
-  id: number;
-  user_id: number;
-  plaid_account_id: string;
-  plaid_item_id: string;
-  name: string;
-  mask: string;
-  type: string;
-  subtype: string;
-  balance: number;
-  available_balance: number;
-  currency: string;
-  status: string;
-  is_hidden: boolean;
-  monthly_payment: number;
-  created_at: number;
+export type CheckoutSessionResponse = {
+  url: string;
 };
 
-export type PlaidItem = {
-  id: number;
-  row_id: string;
-  user_id: number;
-  plaid_item_id: string;
-  institution_id: string;
-  institution_name: string;
-  sync_cursor: string;
-  status: string;
-  error_code?: string;
-  last_synced: number;
-  created_at: number;
+export type BillingPortalResponse = {
+  url: string;
 };
 
-export type PlaidItemWithAccounts = {
-  Accounts: Account[];
+export type ChangeSubscriptionRequest = {
+  tier: string;
 };
 
-export type Session = {
+export type ChangeSubscriptionResponse = {
+  subscription: SubscriptionPayload;
+};
+
+export type DashboardWidget = {
   id: string;
-  user_id: number;
-  expires_at: number;
-  reauthenticated_at: number;
-  created_at: number;
+  visible: boolean;
+  order: number;
 };
 
-export type Transaction = {
-  id: number;
-  plaid_id: number;
-  plaid_transaction_id: string;
-  date: number;
-  amount: number;
+export type DashboardLayout = {
+  desktop: DashboardWidget[];
+  mobile: DashboardWidget[];
+};
+
+export type MonthlySpend = {
+  month: string;
+  total: number;
+};
+
+export type MonthCashflow = {
+  spend: number;
+  income: number;
+};
+
+export type DashboardSummary = {
+  net_worth: number;
+  cash: number;
+  savings: number;
+  credit_debt: number;
+  loan_debt: number;
+  loan_monthly_payments: number;
+  investments: number;
+  account_count: number;
+  avg_monthly_spend: number;
+  months_to_zero: number;
+};
+
+export type PlaidLimits = {
+  max_items: number;
+  max_api_calls_month: number;
+};
+
+export type PlaidUsage = {
+  subscription_tier: string;
+  limits: PlaidLimits;
+  active_items: number;
+  api_calls_used: number;
+  period_start: number;
+  period_end: number;
+};
+
+export type BillingPeriod = {
+  anchor: number;
+  period_start: number;
+  period_end: number;
+};
+
+export type TierPlan = {
+  id: string;
   name: string;
-  merchant_name: string;
-  plaid_category: string;
-  pending: boolean;
-  created_at: number;
-  tags?: Tag[];
+  limits: PlaidLimits;
+  price_monthly_cents: number;
 };
 
-export type TransactionFilters = {
-  Search: string;
-  MinAmount: number;
-  MaxAmount: number;
-  StartDate: number;
-  EndDate: number;
-  CategoryID: number;
-  Tags: number[];
-  SortBy: string;
-  SortDir: string;
-  Limit: number;
-  Offset: number;
-};
-
-export type TransactionPageData = {
-  Transactions: Transaction[];
-  TotalCount: number;
-  CurrentPage: number;
-  PageSize: number;
-  Filters: TransactionFilters;
-  AllTags: Tag[];
-  Categories: Category[];
-};
-
-export type User = {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  theme_preference: string;
-  created_at: number;
-  sso_logins?: UserSSO[];
-};
-
-export type UserSSO = {
-  id: number;
+export type UserPrivileges = {
   user_id: number;
-  provider: string;
-  sso_id: string;
-  created_at: number;
+  unlimited_limits: boolean;
+  stripe_coupon_id?: string;
+  notes?: string;
+};
+
+export type SubscriptionPrivileges = {
+  unlimited_limits: boolean;
+  has_discount: boolean;
 };
 

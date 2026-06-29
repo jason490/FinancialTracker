@@ -1,6 +1,8 @@
 package plaid
 
 import (
+	"errors"
+
 	"github.com/plaid/plaid-go/v42/plaid"
 )
 
@@ -10,6 +12,13 @@ const (
 	ItemStatusNeedsReauth   = "needs_reauth"
 	ItemStatusDisconnected  = "disconnected"
 	ItemStatusError         = "error"
+)
+
+// Sentinel errors for subscription and usage limits.
+var (
+	ErrPlaidAPILimitExceeded  = errors.New("monthly Plaid API limit reached for your plan")
+	ErrPlaidItemLimitExceeded = errors.New("bank connection limit reached for your plan")
+	ErrPlaidSyncRateLimited   = errors.New("You can sync once per minute. Bank data is often a few hours to a day behind; waiting won't pull updates faster than Plaid provides.")
 )
 
 // parsePlaidError extracts the Plaid error_code from an API error response.

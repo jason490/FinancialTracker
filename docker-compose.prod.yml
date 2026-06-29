@@ -1,0 +1,54 @@
+# Production stack: compiled Go API + Caddy (TLS, API proxy, static SSG frontend).
+#
+# Usage:
+#   cp env.prod.example .env   # fill in secrets and your public URL
+#   make prod-build
+#   make prod-up
+#
+# The frontend is built as static files at image build time and served by Caddy.
+# No Vite, Vinxi, or nginx runs at runtime.
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy.prod
+      args:
+        VITE_API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
+        VITE_FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-http://localhost}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ENV: production
+      PORT: 8080
+      DATABASE_PATH: /data/main.db
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    volumes:
+      - db_data:/data
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:

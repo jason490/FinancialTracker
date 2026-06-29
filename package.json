@@ -1,15 +1,5 @@
 {
   "name": "FinancialTracker",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "tailwind": "tailwindcss -i ./app/web/static/css/input.css -o ./app/web/static/css/tailwind.css"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "tailwindcss": "^3.4.19"
-  }
+  "private": true
 }

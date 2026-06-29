@@ -1,0 +1,348 @@
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 1.5rem;
+  padding:
+    calc(1.25rem + env(safe-area-inset-top))
+    clamp(1rem, 4vw, 2.5rem)
+    calc(1.5rem + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 92%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 38%),
+    var(--bg);
+  position: relative;
+}
+
+.shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.header,
+.progress,
+.main {
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.headerHint {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 36rem;
+}
+
+.progressItem {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.progressDot {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.82rem;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    transform 0.35s ease;
+}
+
+.progressItemActive .progressDot {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: scale(1.06);
+}
+
+.progressItemDone .progressDot {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  color: var(--accent);
+}
+
+.progressItemActive,
+.progressItemDone {
+  color: var(--text);
+}
+
+.main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+.stepPanel {
+  width: min(100%, 52rem);
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1.35rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface-elevated) 96%, transparent),
+      color-mix(in srgb, var(--surface) 88%, transparent)
+    );
+  box-shadow: var(--shadow);
+  animation: stepReveal 0.55s ease both;
+}
+
+@keyframes stepReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stepEyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.stepTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.stepLead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  max-width: 38rem;
+  line-height: 1.55;
+}
+
+.featureGrid {
+  display: grid;
+  gap: 0.85rem;
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+
+@media (min-width: 720px) {
+  .featureGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.featureCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  padding: 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  animation: stepReveal 0.55s ease both;
+}
+
+.featureCard:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.featureCard:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.featureIcon {
+  font-size: 1.2rem;
+  color: var(--accent);
+  line-height: 1;
+  margin-top: 0.15rem;
+}
+
+.featureTitle {
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.featureCopy {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.planNotice,
+.syncHint,
+.statusInfo {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.planNotice,
+.syncHint {
+  color: var(--text-muted);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+}
+
+.statusInfo {
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.connectCard {
+  display: grid;
+  gap: 0.85rem;
+  justify-items: start;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--accent) 10%, transparent),
+      transparent 55%
+    ),
+    var(--surface);
+}
+
+.connectIcon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.connectTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.connectCopy {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 32rem;
+}
+
+.stepActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.primaryButton {
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.secondaryButton {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.errorBanner {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, var(--border));
+  font-size: 0.88rem;
+}

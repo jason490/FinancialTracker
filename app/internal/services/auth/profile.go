@@ -16,9 +16,10 @@ func (s *AuthService) GetSessionProfile(userID int64) (*external.SessionProfile,
 	}
 
 	return &external.SessionProfile{
-		FirstName:       user.FirstName,
-		LastName:        user.LastName,
-		Email:           user.Email,
-		ThemePreference: user.ThemePreference,
+		FirstName:           user.FirstName,
+		LastName:            user.LastName,
+		Email:               user.Email,
+		ThemePreference:     user.ThemePreference,
+		OnboardingCompleted: user.OnboardingCompleted,
 	}, nil
 }

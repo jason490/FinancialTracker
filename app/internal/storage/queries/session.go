@@ -39,3 +39,9 @@ func DeleteSession(db *sql.DB, id string) error {
     _, err := db.Exec(query, id)
     return err
 }
+
+// DeleteUserSessions removes all sessions for a user.
+func DeleteUserSessions(db *sql.DB, userID int64) error {
+	_, err := db.Exec(`DELETE FROM sessions WHERE user_id = ?`, userID)
+	return err
+}

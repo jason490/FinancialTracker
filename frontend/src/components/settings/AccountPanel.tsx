@@ -2,14 +2,17 @@ import { useNavigate } from "@solidjs/router";
 import { Show, createEffect, createSignal } from "solid-js";
 import { getPublicApiUrl, getFrontendUrl } from "~/lib/env";
 import { updatePassword, updateProfile, unlinkSSO } from "~/lib/settings";
+import { logout } from "~/lib/auth";
+import { useAuth } from "~/lib/auth-context";
 import type { SettingsProfile } from "~/lib/types";
 import DeleteAccountSection from "~/components/settings/DeleteAccountSection";
+import { LogOutIcon } from "~/components/icons";
 import styles from "~/styles/settings.module.css";
 
 type AccountPanelProps = {
   profile: SettingsProfile;
   onUpdated: (profile: SettingsProfile) => void;
-  onMessage: (message: string, type: "ok" | "error") => void;
+  onMessage: (message: string, type: "ok" | "error" | "info") => void;
   reauthSuccess?: boolean;
   onReauthHandled?: () => void;
 };
@@ -17,6 +20,7 @@ type AccountPanelProps = {
 // AccountPanel manages profile details, password, and Google SSO linking.
 export default function AccountPanel(props: AccountPanelProps) {
   const navigate = useNavigate();
+  const { refetch: refetchAuth } = useAuth();
   const [firstName, setFirstName] = createSignal(props.profile.first_name);
   const [lastName, setLastName] = createSignal(props.profile.last_name);
 
@@ -31,8 +35,22 @@ export default function AccountPanel(props: AccountPanelProps) {
   const [pendingProfile, setPendingProfile] = createSignal(false);
   const [pendingPassword, setPendingPassword] = createSignal(false);
   const [pendingUnlink, setPendingUnlink] = createSignal(false);
+  const [pendingLogout, setPendingLogout] = createSignal(false);
 
   const hasGoogle = () => props.profile.sso_providers.includes("google");
+
+  const handleLogout = async () => {
+    setPendingLogout(true);
+    try {
+      await logout();
+      await refetchAuth();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      props.onMessage(err instanceof Error ? err.message : "Failed to log out", "error");
+    } finally {
+      setPendingLogout(false);
+    }
+  };
 
   const handleProfileSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -267,6 +285,24 @@ export default function AccountPanel(props: AccountPanelProps) {
                 {pendingUnlink() ? "Unlinking..." : "Unlink"}
               </button>
             </Show>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class={styles.sectionTitle}>Sign out</h2>
+        <p class={styles.sectionHint}>Log out of your current session on this device.</p>
+        <div class={styles.card}>
+          <div class={styles.actions}>
+            <button
+              class={styles.buttonSecondary}
+              type="button"
+              onClick={handleLogout}
+              disabled={pendingLogout()}
+            >
+              <LogOutIcon size={18} style={{ "margin-right": "0.5rem", "vertical-align": "middle" }} />
+              {pendingLogout() ? "Logging out..." : "Log out"}
+            </button>
           </div>
         </div>
       </section>

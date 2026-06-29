@@ -1,6 +1,5 @@
 import { clientApiRequest } from "./api";
 import type {
-  CategoryWithTagsView,
   CreateCategoryRequest,
   CreateTagRequest,
   DeleteCategoryRequest,
@@ -67,5 +66,3 @@ export async function deleteCategory(
     body,
   });
 }
-
-export type { CategoryWithTagsView, TagsPayload, TagFilterView };

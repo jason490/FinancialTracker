@@ -1,5 +1,5 @@
 import ApexCharts, { type ApexOptions } from "apexcharts";
-import { onCleanup, onMount, createEffect } from "solid-js";
+import { onCleanup, onMount, createEffect, on } from "solid-js";
 
 type ApexChartProps = {
   options: ApexOptions;
@@ -12,6 +12,7 @@ type ApexChartProps = {
 export default function ApexChart(props: ApexChartProps) {
   let container!: HTMLDivElement;
   let chart: ApexCharts | undefined;
+  let isDestroyed = false;
 
   onMount(() => {
     chart = new ApexCharts(container, {
@@ -22,23 +23,42 @@ export default function ApexChart(props: ApexChartProps) {
         height: props.height ?? 240,
       },
     });
-    chart.render();
+    
+    if (!container) return;
+    
+    chart.render().catch((e) => {
+      console.warn("ApexCharts render error ignored (likely unmounted):", e);
+    });
   });
 
-  createEffect(() => {
-    if (!chart) return;
-    chart.updateOptions(
-      {
-        ...props.options,
-        series: props.series,
+  createEffect(
+    on(
+      () => [props.options, props.series],
+      () => {
+        if (!chart || isDestroyed) return;
+        chart
+          .updateOptions(
+            {
+              ...props.options,
+              series: props.series,
+            },
+            false,
+            true
+          )
+          .catch((e) => {
+            console.warn("ApexCharts update ignored during teardown:", e);
+          });
       },
-      false,
-      true
-    );
-  });
+      { defer: true }
+    )
+  );
 
   onCleanup(() => {
-    chart?.destroy();
+    isDestroyed = true;
+    if (chart) {
+      chart.destroy();
+      chart = undefined;
+    }
   });
 
   return <div class={props.class} ref={container} />;
