@@ -4,6 +4,7 @@ import styles from "~/styles/onboarding.module.css";
 
 type OnboardingLayoutProps = {
   step: OnboardingStep;
+  subscriptionsEnabled?: boolean;
   children: JSX.Element;
 };
 
@@ -16,7 +17,10 @@ export default function OnboardingLayout(props: OnboardingLayoutProps) {
         <p class={styles.headerHint}>Account setup</p>
       </header>
 
-      <OnboardingProgress current={props.step} />
+      <OnboardingProgress
+        current={props.step}
+        subscriptionsEnabled={props.subscriptionsEnabled}
+      />
 
       <main class={styles.main}>{props.children}</main>
     </div>

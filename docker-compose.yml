@@ -26,6 +26,7 @@ services:
       - CGO_ENABLED=1
       - PORT=8080
       - ENV=development
+      - SUBSCRIPTIONS_ENABLED=false
       - API_PUBLIC_URL=http://laptop-server.home.arpa
     restart: unless-stopped
 

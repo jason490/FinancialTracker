@@ -1,5 +1,6 @@
 import { Show, createSignal } from "solid-js";
 import PlanPicker from "~/components/settings/PlanPicker";
+import { onboardingStepNumber } from "~/components/onboarding/OnboardingProgress";
 import { changeSubscription, createCheckoutSession } from "~/lib/subscription";
 import type { ConnectionsPayload, SubscriptionPayload, TierPlan } from "~/lib/types";
 import type { Resource } from "solid-js";
@@ -49,9 +50,14 @@ export default function OnboardingPlanStep(props: OnboardingPlanStepProps) {
     }
   };
 
+  const stepLabel = () => {
+    const { current, total } = onboardingStepNumber("plan", true);
+    return `Step ${current} of ${total}`;
+  };
+
   return (
     <section class={styles.stepPanel}>
-      <p class={styles.stepEyebrow}>Step 2 of 3</p>
+      <p class={styles.stepEyebrow}>{stepLabel()}</p>
       <h2 class={styles.stepTitle}>Choose your plan</h2>
       <p class={styles.stepLead}>
         Start on Free and upgrade anytime. Limits reset on your signup date each month.

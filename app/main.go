@@ -23,6 +23,10 @@ import (
 func main() {
 	loadEnvFiles()
 
+	if err := config.ValidateRequiredEnv(); err != nil {
+		log.Fatal(err)
+	}
+
 	db, store, err := openDatabase(config.EnvOr("DATABASE_PATH", "./database/main.db"))
 	if err != nil {
 		log.Fatal(err)

@@ -1,9 +1,12 @@
 # Production stack: compiled Go API + Caddy (TLS, API proxy, static SSG frontend).
 #
 # Usage:
-#   cp env.prod.example .env   # fill in secrets and your public URL
+#   cp env.prod.example .env   # fill in secrets and your public hostname
 #   make prod-build
 #   make prod-up
+#
+# Caddy obtains a Let's Encrypt certificate when SITE_HOST resolves to this server
+# and ports 80/443 are reachable. API_PUBLIC_URL and FRONTEND_URL must use https://.
 #
 # The frontend is built as static files at image build time and served by Caddy.
 # No Vite, Vinxi, or nginx runs at runtime.
@@ -14,13 +17,13 @@ services:
       context: .
       dockerfile: Dockerfile.proxy.prod
       args:
-        VITE_API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
-        VITE_FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+        VITE_API_PUBLIC_URL: ${API_PUBLIC_URL:-https://yourdomain.com}
+        VITE_FRONTEND_URL: ${FRONTEND_URL:-https://yourdomain.com}
     ports:
       - "80:80"
       - "443:443"
     environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:-http://localhost}
+      SITE_HOST: ${SITE_HOST:-yourdomain.com}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -40,8 +43,8 @@ services:
       ENV: production
       PORT: 8080
       DATABASE_PATH: /data/main.db
-      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://yourdomain.com}
+      FRONTEND_URL: ${FRONTEND_URL:-https://yourdomain.com}
     volumes:
       - db_data:/data
     expose:

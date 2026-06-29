@@ -1,4 +1,5 @@
 import { Show, createSignal } from "solid-js";
+import { onboardingStepNumber } from "~/components/onboarding/OnboardingProgress";
 import { BankIcon } from "~/components/icons";
 import { PLAID_SYNC_LAG_HINT, reportSyncError } from "~/lib/api-error";
 import { startNewConnection } from "~/lib/connections";
@@ -8,6 +9,7 @@ import styles from "~/styles/onboarding.module.css";
 
 type OnboardingConnectStepProps = {
   connections: Resource<ConnectionsPayload>;
+  subscriptionsEnabled: boolean;
   refetchConnections: () => void;
   onBack: () => void;
   onFinish: () => void;
@@ -38,9 +40,14 @@ export default function OnboardingConnectStep(props: OnboardingConnectStepProps)
     }
   };
 
+  const stepLabel = () => {
+    const { current, total } = onboardingStepNumber("connect", props.subscriptionsEnabled);
+    return `Step ${current} of ${total}`;
+  };
+
   return (
     <section class={styles.stepPanel}>
-      <p class={styles.stepEyebrow}>Step 3 of 3</p>
+      <p class={styles.stepEyebrow}>{stepLabel()}</p>
       <h2 class={styles.stepTitle}>Connect your bank</h2>
       <p class={styles.stepLead}>
         Link an institution to start syncing transactions automatically. You can always add more

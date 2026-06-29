@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/models"
 	"FinancialTracker/internal/storage"
 )
@@ -12,8 +13,9 @@ var (
 	ErrInvalidTier       = errors.New("invalid subscription tier")
 	ErrStripeRequired    = errors.New("plan changes require Stripe checkout in production")
 	ErrAlreadyOnTier     = errors.New("already on this plan")
-	ErrAPILimitExceeded  = errors.New("monthly API limit reached for your plan")
-	ErrUserNotFound      = errors.New("user not found")
+	ErrAPILimitExceeded       = errors.New("monthly API limit reached for your plan")
+	ErrUserNotFound           = errors.New("user not found")
+	ErrSubscriptionsDisabled  = errors.New("subscriptions are disabled")
 )
 
 // TierCatalog lists available plans with skeleton pricing until Stripe is wired up.
@@ -134,6 +136,9 @@ func (s *Service) GetUserSubscription(userID int64) (*models.UserSubscription, e
 
 // ChangeTier updates the user's plan. In production this will be replaced by Stripe webhooks.
 func (s *Service) ChangeTier(userID int64, tier string) error {
+	if !config.SubscriptionsEnabled() {
+		return ErrSubscriptionsDisabled
+	}
 	if !isValidTier(tier) {
 		return ErrInvalidTier
 	}
@@ -172,7 +177,7 @@ func (s *Service) ChangeTier(userID int64, tier string) error {
 
 // CanChangePlanDirectly reports whether skeleton tier changes are enabled.
 func (s *Service) CanChangePlanDirectly() bool {
-	return s.allowDirectChange
+	return config.SubscriptionsEnabled() && s.allowDirectChange
 }
 
 // ReserveAPICall validates the user has at least one API call available in the
@@ -183,6 +188,10 @@ func (s *Service) CanChangePlanDirectly() bool {
 // monthly quota recorded in plaid_api_usage so users see a single unified
 // number on the Plan tab.
 func (s *Service) ReserveAPICall(userID int64) error {
+	if !config.SubscriptionsEnabled() {
+		return nil
+	}
+
 	sub, err := s.GetUserSubscription(userID)
 	if err != nil {
 		return err

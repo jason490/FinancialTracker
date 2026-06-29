@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/models"
 	"FinancialTracker/internal/models/external"
 	"FinancialTracker/internal/services/financial"
@@ -65,6 +66,8 @@ func (h *SubscriptionHandler) HandleChangeSubscription(c *echo.Context) error {
 
 	if err := h.subscriptionService.ChangeTier(userID, req.Tier); err != nil {
 		switch {
+		case errors.Is(err, subscriptionService.ErrSubscriptionsDisabled):
+			return c.JSON(http.StatusForbidden, ErrorResponse("subscriptions_disabled", "Subscriptions are disabled on this server"))
 		case errors.Is(err, subscriptionService.ErrInvalidTier):
 			return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_tier", err.Error()))
 		case errors.Is(err, subscriptionService.ErrAlreadyOnTier):
@@ -191,8 +194,9 @@ func (h *SubscriptionHandler) buildPayload(userID int64) (*external.Subscription
 		Billing:               *period,
 		Limits:                limits,
 		Plans:                 subscriptionService.TierCatalog,
-		StripeConfigured:      financial.StripeConfigured(),
+		StripeConfigured:      config.SubscriptionsEnabled() && financial.StripeConfigured(),
 		BillingEnabled:        stripebilling.BillingReady(),
+		SubscriptionsEnabled:  config.SubscriptionsEnabled(),
 		HasActiveSubscription: sub.StripeSubscriptionID != "",
 		CanChangePlan:         h.subscriptionService.CanChangePlanDirectly(),
 		Privileges:            privileges,

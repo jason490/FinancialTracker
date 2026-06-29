@@ -12,6 +12,7 @@ type SubscriptionPayload struct {
 	Plans                 []models.TierPlan             `json:"plans"`
 	StripeConfigured      bool                          `json:"stripe_configured"`
 	BillingEnabled        bool                          `json:"billing_enabled"`
+	SubscriptionsEnabled  bool                          `json:"subscriptions_enabled"`
 	HasActiveSubscription bool                          `json:"has_active_subscription"`
 	CanChangePlan         bool                          `json:"can_change_plan"`
 	Privileges            models.SubscriptionPrivileges `json:"privileges"`

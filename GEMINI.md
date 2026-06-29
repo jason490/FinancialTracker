@@ -29,12 +29,13 @@ When `stripe` is active, reads/writes use `stripe_fc_*` tables only. When `plaid
 
 | Variable | Purpose |
 |----------|---------|
-| `ENV=development` | Dev mode (relaxed rate limits, sandbox keys, skeleton plan switching, resets DB via `test_schema.sql`, seeds `test@test.com`) |
+| `ENV=development` | Dev mode (relaxed rate limits, sandbox keys, skeleton plan switching when subscriptions enabled, resets DB via `test_schema.sql`, seeds `test@test.com`) |
 | `ENV=production` | Production mode (or omit `ENV` / set any other value). Uses idempotent `schema.sql`, no test user seed, secure cookies, auth rate limits, Stripe prod keys |
 | `PORT` | HTTP listen port (default `8080`) |
 | `DATABASE_PATH` | SQLite file path (default `./database/main.db`) |
 | `FINANCIAL_PROVIDER` | `plaid` or `stripe` (default `plaid`) |
-| `STRIPE_SANDBOX_SECRET` | Stripe secret key when `ENV=development` |
+| `SUBSCRIPTIONS_ENABLED` | When `true` (default), Stripe billing and per-tier usage limits are active. Set to `false` to disable paid plans, Stripe checkout, and quota enforcement. |
+| `STRIPE_SANDBOX_SECRET` | Stripe secret key when `ENV=development` (only required when `SUBSCRIPTIONS_ENABLED=true` and using Stripe) |
 | `STRIPE_PROD_SECRET` | Stripe secret key in production |
 | `STRIPE_SANDBOX_PUBLISHABLE` | Stripe publishable key returned to the SPA in development |
 | `STRIPE_PUBLISHABLE` | Stripe publishable key in production |
@@ -104,12 +105,12 @@ The project uses a `Makefile` to manage common tasks.
 
 ### Production Docker
 
-*   **Configure:** `cp env.prod.example .env` and set public URLs, secrets, and `ENV=production` (compose sets this automatically).
+*   **Configure:** `cp env.prod.example .env` and set `SITE_HOST`, `API_PUBLIC_URL`, `FRONTEND_URL` (all HTTPS URLs), secrets, and `ENV=production` (compose sets this automatically).
 *   **Build images:** `make prod-build` (compiled Go binary + static SSG frontend baked into Caddy image).
 *   **Start stack:** `make prod-up` (uses `docker-compose.prod.yml`, persistent `db_data` volume, no hot-reload). Two runtime services: **Caddy** (TLS, `/api` proxy, static file server) and **Go API**.
 *   **Stop stack:** `make prod-down`
 *   **Logs:** `make prod-logs`
-*   Set `SITE_ADDRESS=https://yourdomain.com` for automatic HTTPS via Caddy. Dev stack remains `docker compose up` with `docker-compose.yml`.
+*   Set `SITE_HOST=yourdomain.com` (bare hostname, no scheme). Caddy provisions Let's Encrypt automatically when DNS points at the server and ports 80/443 are open. Set `API_PUBLIC_URL` and `FRONTEND_URL` to matching `https://` URLs. Dev stack remains `docker compose up` with `docker-compose.yml`.
 
 > **Note:** For Capacitor to work correctly, the SolidJS app must be configured for a static build (SSG) so that an `index.html` is generated in the web directory (e.g., `dist` or `.output/public`).
 > **Note:** Andriod Studio is not installed on this server, so I will be manually testing the application from a separate machine.

@@ -1,7 +1,9 @@
+import { onboardingStepNumber } from "~/components/onboarding/OnboardingProgress";
 import styles from "~/styles/onboarding.module.css";
 
 type OnboardingWelcomeStepProps = {
   firstName: string;
+  subscriptionsEnabled: boolean;
   onContinue: () => void;
 };
 
@@ -12,9 +14,14 @@ export default function OnboardingWelcomeStep(props: OnboardingWelcomeStepProps)
     return name ? `Welcome, ${name}` : "Welcome aboard";
   };
 
+  const stepLabel = () => {
+    const { current, total } = onboardingStepNumber("welcome", props.subscriptionsEnabled);
+    return `Step ${current} of ${total}`;
+  };
+
   return (
     <section class={styles.stepPanel}>
-      <p class={styles.stepEyebrow}>Step 1 of 3</p>
+      <p class={styles.stepEyebrow}>{stepLabel()}</p>
       <h1 class={styles.stepTitle}>{greeting()}</h1>
       <p class={styles.stepLead}>
         FinancialTracker syncs your accounts, tags every transaction, and builds a dashboard you

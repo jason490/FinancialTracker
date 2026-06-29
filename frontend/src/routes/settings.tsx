@@ -28,6 +28,9 @@ const TABS: Array<{ id: SettingsTab; label: string; icon: typeof UserIcon }> = [
   { id: "data", label: "Data", icon: DatabaseIcon },
 ];
 
+const VISIBLE_TABS = (subscriptionsEnabled: boolean) =>
+  subscriptionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "plan");
+
 // SettingsPage centralizes profile, security, Plaid, and theme preferences.
 export default function SettingsPage() {
   const { user: sessionProfile, refetch: refetchAuth } = useAuth();
@@ -51,6 +54,16 @@ export default function SettingsPage() {
       tab === "data"
     ) {
       setActiveTab(tab);
+    }
+  });
+
+  createEffect(() => {
+    if (subscription.loading) {
+      return;
+    }
+    if (subscription()?.subscriptions_enabled === false && activeTab() === "plan") {
+      setActiveTab("account");
+      setSearchParams({ tab: "account" }, { replace: true, scroll: false });
     }
   });
 
@@ -117,6 +130,8 @@ export default function SettingsPage() {
     setMessage({ text, type });
   };
 
+  const subscriptionsEnabled = () => subscription()?.subscriptions_enabled !== false;
+
   const selectTab = (tab: SettingsTab) => {
     setActiveTab(tab);
     setSearchParams({ tab }, { replace: true, scroll: false });
@@ -140,7 +155,7 @@ export default function SettingsPage() {
 
         <div class={styles.layout}>
           <div class={styles.tabRail} role="tablist" aria-label="Settings sections">
-            {TABS.map((tab) => {
+            {VISIBLE_TABS(subscriptionsEnabled()).map((tab) => {
               const Icon = tab.icon;
               return (
                 <button

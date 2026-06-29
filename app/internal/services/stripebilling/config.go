@@ -25,6 +25,9 @@ func WebhookConfigured() bool {
 
 // BillingReady reports whether checkout can be offered (keys, prices, and webhook).
 func BillingReady() bool {
+	if !config.SubscriptionsEnabled() {
+		return false
+	}
 	return financial.StripeConfigured() && WebhookConfigured() && billingPricesConfigured()
 }
 

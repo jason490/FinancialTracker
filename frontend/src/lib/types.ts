@@ -285,6 +285,7 @@ export type SubscriptionPayload = {
   plans: TierPlan[];
   stripe_configured: boolean;
   billing_enabled: boolean;
+  subscriptions_enabled: boolean;
   has_active_subscription: boolean;
   can_change_plan: boolean;
   privileges: SubscriptionPrivileges;

@@ -17,6 +17,13 @@ const (
 
 // EffectiveLimits returns the quota limits for a user, honoring operator overrides.
 func (s *Service) EffectiveLimits(userID int64) (models.PlaidLimits, error) {
+	if !config.SubscriptionsEnabled() {
+		return models.PlaidLimits{
+			MaxItems:         unlimitedItems,
+			MaxAPICallsMonth: unlimitedAPICalls,
+		}, nil
+	}
+
 	sub, err := s.GetUserSubscription(userID)
 	if err != nil {
 		return models.PlaidLimits{}, err

@@ -28,6 +28,8 @@ export default function OnboardingPage() {
   const [subscription, { refetch: refetchSubscription }] = createResource(getSubscription);
   const [connections, { refetch: refetchConnections }] = createResource(getConnections);
 
+  const subscriptionsEnabled = () => subscription()?.subscriptions_enabled !== false;
+
   onMount(() => {
     endAuthTransition();
   });
@@ -45,6 +47,15 @@ export default function OnboardingPage() {
 
     if (profile.onboarding_completed) {
       navigate("/dashboard", { replace: true });
+    }
+  });
+
+  createEffect(() => {
+    if (subscription.loading || subscriptionsEnabled()) {
+      return;
+    }
+    if (step() === "plan") {
+      setStep("connect");
     }
   });
 
@@ -71,7 +82,7 @@ export default function OnboardingPage() {
 
   return (
     <Show when={!loading() && user() && !user()!.onboarding_completed}>
-      <OnboardingLayout step={step()}>
+      <OnboardingLayout step={step()} subscriptionsEnabled={subscriptionsEnabled()}>
         <Title>Get Started | Financial Tracker</Title>
 
         <Show when={error()}>
@@ -81,10 +92,14 @@ export default function OnboardingPage() {
         </Show>
 
         <Show when={step() === "welcome"}>
-          <OnboardingWelcomeStep firstName={firstName()} onContinue={() => setStep("plan")} />
+          <OnboardingWelcomeStep
+            firstName={firstName()}
+            subscriptionsEnabled={subscriptionsEnabled()}
+            onContinue={() => setStep(subscriptionsEnabled() ? "plan" : "connect")}
+          />
         </Show>
 
-        <Show when={step() === "plan"}>
+        <Show when={step() === "plan" && subscriptionsEnabled()}>
           <OnboardingPlanStep
             subscription={subscription}
             connections={connections}
@@ -98,8 +113,9 @@ export default function OnboardingPage() {
         <Show when={step() === "connect"}>
           <OnboardingConnectStep
             connections={connections}
+            subscriptionsEnabled={subscriptionsEnabled()}
             refetchConnections={refetchConnections}
-            onBack={() => setStep("plan")}
+            onBack={() => setStep(subscriptionsEnabled() ? "plan" : "welcome")}
             onFinish={handleFinish}
             onError={(message) => setError(message)}
             finishing={finishing()}

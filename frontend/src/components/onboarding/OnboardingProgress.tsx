@@ -2,7 +2,7 @@ import styles from "~/styles/onboarding.module.css";
 
 export type OnboardingStep = "welcome" | "plan" | "connect";
 
-const STEPS: Array<{ id: OnboardingStep; label: string }> = [
+const ALL_STEPS: Array<{ id: OnboardingStep; label: string }> = [
   { id: "welcome", label: "Welcome" },
   { id: "plan", label: "Plan" },
   { id: "connect", label: "Connect" },
@@ -10,15 +10,21 @@ const STEPS: Array<{ id: OnboardingStep; label: string }> = [
 
 type OnboardingProgressProps = {
   current: OnboardingStep;
+  subscriptionsEnabled?: boolean;
 };
 
 // OnboardingProgress renders the horizontal step indicator for the wizard.
 export default function OnboardingProgress(props: OnboardingProgressProps) {
-  const currentIndex = () => STEPS.findIndex((step) => step.id === props.current);
+  const steps = () =>
+    props.subscriptionsEnabled === false
+      ? ALL_STEPS.filter((step) => step.id !== "plan")
+      : ALL_STEPS;
+
+  const currentIndex = () => steps().findIndex((step) => step.id === props.current);
 
   return (
     <ol class={styles.progress} aria-label="Onboarding progress">
-      {STEPS.map((step, index) => {
+      {steps().map((step, index) => {
         const state =
           index < currentIndex() ? "done" : index === currentIndex() ? "active" : "upcoming";
         return (
@@ -39,4 +45,16 @@ export default function OnboardingProgress(props: OnboardingProgressProps) {
       })}
     </ol>
   );
+}
+
+export function onboardingStepNumber(
+  step: OnboardingStep,
+  subscriptionsEnabled: boolean
+): { current: number; total: number } {
+  const steps =
+    subscriptionsEnabled === false
+      ? ALL_STEPS.filter((item) => item.id !== "plan")
+      : ALL_STEPS;
+  const current = steps.findIndex((item) => item.id === step) + 1;
+  return { current, total: steps.length };
 }
