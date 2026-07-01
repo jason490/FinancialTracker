@@ -208,6 +208,22 @@
   font-size: 0.78rem;
 }
 
+.callout {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-elevated));
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.buttonDisabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 .error {
   background: var(--danger-soft);
   color: var(--danger);

@@ -208,6 +208,23 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
 CREATE INDEX IF NOT EXISTS idx_password_reset_codes_user_active
     ON password_reset_codes(user_id, used_at, expires_at);
 
+-- Temporary registration invite codes (hashed, single-use; used when subscriptions are disabled)
+CREATE TABLE IF NOT EXISTS registration_codes (
+    id INTEGER PRIMARY KEY,
+    code_hash TEXT NOT NULL,
+    created_by_user_id INTEGER,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    used_at INTEGER,
+    used_by_user_id INTEGER,
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (used_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_registration_codes_active
+    ON registration_codes(used_at, expires_at);
+
 -- Sessions for authentication
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,

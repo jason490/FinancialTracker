@@ -1,15 +1,14 @@
-# Production stack: compiled Go API + Caddy (TLS, API proxy, static SSG frontend).
+# Production stack: compiled Go API + Caddy (automatic TLS, API proxy, static SSG frontend).
 #
 # Usage:
-#   cp env.prod.example .env   # fill in secrets and your public hostname
+#   cp env.prod.example .env
+#   # Set SITE_HOST, API_PUBLIC_URL, FRONTEND_URL, and secrets
 #   make prod-build
 #   make prod-up
 #
-# Caddy obtains a Let's Encrypt certificate when SITE_HOST resolves to this server
-# and ports 80/443 are reachable. API_PUBLIC_URL and FRONTEND_URL must use https://.
-#
-# The frontend is built as static files at image build time and served by Caddy.
-# No Vite, Vinxi, or nginx runs at runtime.
+# Caddy obtains and renews Let's Encrypt certificates when SITE_HOST resolves to
+# this server and ports 80/443 are reachable. Re-run `make prod-build` after
+# changing API_PUBLIC_URL or FRONTEND_URL (baked into the SPA).
 
 services:
   proxy:
@@ -24,6 +23,7 @@ services:
       - "443:443"
     environment:
       SITE_HOST: ${SITE_HOST:-yourdomain.com}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@yourdomain.com}
     volumes:
       - caddy_data:/data
       - caddy_config:/config

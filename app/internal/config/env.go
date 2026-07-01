@@ -45,6 +45,28 @@ func SubscriptionsEnabled() bool {
 	return EnvBool("SUBSCRIPTIONS_ENABLED", true)
 }
 
+// RegistrationGateEnabled reports whether new accounts require an admin invite code.
+func RegistrationGateEnabled() bool {
+	return !SubscriptionsEnabled()
+}
+
+// RegistrationAdminEmails returns emails allowed to issue registration invite codes.
+func RegistrationAdminEmails() []string {
+	raw := os.Getenv("REGISTRATION_ADMIN_EMAILS")
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ";")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		email := strings.ToLower(strings.TrimSpace(part))
+		if email != "" {
+			out = append(out, email)
+		}
+	}
+	return out
+}
+
 // FinancialProvider returns the active bank connection provider.
 func FinancialProvider() string {
 	switch strings.TrimSpace(strings.ToLower(os.Getenv("FINANCIAL_PROVIDER"))) {

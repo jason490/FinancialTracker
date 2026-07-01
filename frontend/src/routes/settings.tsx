@@ -9,9 +9,10 @@ import AppearancePanel from "~/components/settings/AppearancePanel";
 import ConnectionsPanel from "~/components/settings/ConnectionsPanel";
 import DataPanel from "~/components/settings/DataPanel";
 import PlanPanel from "~/components/settings/PlanPanel";
-import { BankIcon, DatabaseIcon, PaletteIcon, UserIcon, CreditCardIcon } from "~/components/icons";
+import { BankIcon, DatabaseIcon, GitHubIcon, PaletteIcon, UserIcon, CreditCardIcon } from "~/components/icons";
 import AppLayout from "~/layouts/AppLayout";
 import { useAuth } from "~/lib/auth-context";
+import { GITHUB_REPO_URL } from "~/lib/constants";
 import { getConnections } from "~/lib/connections";
 import { getSettings } from "~/lib/settings";
 import { getSubscription } from "~/lib/subscription";
@@ -221,6 +222,19 @@ export default function SettingsPage() {
             </LoadingCrossfade>
           </section>
         </div>
+
+        <footer class={styles.pageFooter}>
+          <p class={styles.pageFooterCopy}>Financial Tracker</p>
+          <a
+            class={styles.pageFooterLink}
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHubIcon size={16} />
+            <span>View source on GitHub</span>
+          </a>
+        </footer>
       </div>
     </AppLayout>
   );

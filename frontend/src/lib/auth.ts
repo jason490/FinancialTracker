@@ -22,6 +22,17 @@ export async function register(body: Record<string, any>): Promise<{ status: str
   return result;
 }
 
+// getRegistrationConfig reports whether invite codes are required to register.
+export async function getRegistrationConfig(): Promise<{
+  registration_code_required: boolean;
+  code_expires_in_seconds: number;
+}> {
+  return clientApiRequest<{
+    registration_code_required: boolean;
+    code_expires_in_seconds: number;
+  }>("/api/v1/auth/registration-config");
+}
+
 // forgotPassword requests a password reset code by email.
 export async function forgotPassword(email: string): Promise<{
   message: string;

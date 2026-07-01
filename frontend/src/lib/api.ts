@@ -101,10 +101,12 @@ export async function clientApiRequest<T>(
   // Handle non-OK responses first to avoid parsing issues if the error is HTML
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-      window.location.href = "/login";
-      // We throw a specific error that can be ignored or handled if needed,
-      // but the page reload will take over.
-      throw new Error("Session expired. Redirecting to login...");
+      if (path !== "/api/v1/auth/me") {
+        window.location.href = "/login";
+        // We throw a specific error that can be ignored or handled if needed,
+        // but the page reload will take over.
+        throw new Error("Session expired. Redirecting to login...");
+      }
     }
 
     let errorMessage = `API Request failed with status ${response.status}`;

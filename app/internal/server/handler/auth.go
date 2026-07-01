@@ -80,10 +80,15 @@ func (h *AuthHandler) HandleRegister(c *echo.Context) error {
 		req.Email,
 		req.Password,
 		req.ConfirmPassword,
+		req.RegistrationCode,
 	)
 	if err != nil {
-		switch err.Error() {
-		case "user already exists":
+		switch {
+		case errors.Is(err, auth.ErrInvalidRegistrationCode):
+			return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_registration_code", "Invalid or expired registration code"))
+		case errors.Is(err, auth.ErrRegistrationCodeRequired):
+			return c.JSON(http.StatusBadRequest, ErrorResponse("registration_code_required", "Registration code is required"))
+		case err.Error() == "user already exists":
 			return c.JSON(http.StatusConflict, ErrorResponse("user_exists", err.Error()))
 		default:
 			return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", err.Error()))
@@ -92,6 +97,15 @@ func (h *AuthHandler) HandleRegister(c *echo.Context) error {
 
 	h.setSessionCookie(c, session.ID, false)
 	return c.JSON(http.StatusOK, map[string]string{"status": "success"})
+}
+
+// HandleRegistrationConfig reports whether invite codes are required to register.
+func (h *AuthHandler) HandleRegistrationConfig(c *echo.Context) error {
+	required := auth.RegistrationGateEnabled()
+	return c.JSON(http.StatusOK, external.RegistrationConfigResponse{
+		RegistrationCodeRequired: required,
+		CodeExpiresInSeconds:     auth.RegistrationCodeTTLSeconds,
+	})
 }
 
 // HandleLogout invalidates the current session.

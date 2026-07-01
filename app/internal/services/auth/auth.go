@@ -66,7 +66,7 @@ func (s *AuthService) Authenticate(email, password string, remember bool) (*mode
 }
 
 // Register creates a new user and returns a new session
-func (s *AuthService) Register(firstName, lastName, email, password, confirmPassword string) (*models.Session, error) {
+func (s *AuthService) Register(firstName, lastName, email, password, confirmPassword, registrationCode string) (*models.Session, error) {
 	firstName = utils.Sanitize(firstName)
 	lastName = utils.Sanitize(lastName)
 	email = strings.ToLower(utils.Sanitize(email))
@@ -85,6 +85,10 @@ func (s *AuthService) Register(firstName, lastName, email, password, confirmPass
 	}
 	if msg, err := utils.ValidatePassword(password); err {
 		return nil, errors.New(msg)
+	}
+
+	if err := s.RequireRegistrationCode(registrationCode); err != nil {
+		return nil, err
 	}
 
 	existing, _ := s.store.GetUserByEmail(email)
@@ -107,6 +111,11 @@ func (s *AuthService) Register(firstName, lastName, email, password, confirmPass
 
 	if err := s.store.CreateUser(user); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	if err := s.ValidateAndConsumeRegistrationCode(registrationCode, user.ID); err != nil {
+		_ = s.store.DeleteUser(user.ID)
+		return nil, err
 	}
 
 	sessionID := uuid.New().String()

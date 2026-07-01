@@ -18,6 +18,7 @@ func (s *Server) routes() {
 // api registers JSON API routes for the SolidStart frontend
 func (s *Server) api() {
 	authHandler := handler.NewAuthHandler(s.authService, s.store)
+	adminHandler := handler.NewAdminHandler(s.authService)
 	ssoHandler := handler.NewSSOHandler(s.apiGoogleOauthConfig, s.ssoService)
 	authMiddleware := middleware.NewAuthMiddleware(s.store, s.financialFacade)
 
@@ -37,6 +38,7 @@ func (s *Server) api() {
 	})
 
 	auth.POST("/login", authHandler.HandleLogin)
+	auth.GET("/registration-config", authHandler.HandleRegistrationConfig)
 	auth.POST("/register", authHandler.HandleRegister)
 	auth.POST("/forgot-password", authHandler.HandleForgotPassword)
 	auth.POST("/verify-reset-code", authHandler.HandleVerifyResetCode)
@@ -50,6 +52,7 @@ func (s *Server) api() {
 	protected := api.Group("", authMiddleware.AuthMiddlewareJSON)
 	protected.POST("/auth/logout", authHandler.HandleLogout)
 	protected.POST("/auth/onboarding/complete", authHandler.HandleCompleteOnboarding)
+	protected.POST("/admin/registration-codes", adminHandler.HandleCreateRegistrationCode)
 
 	dashboardHandler := handler.NewDashboardHandler(s.dashService)
 	protected.GET("/dashboard", dashboardHandler.HandleDashboardGet)

@@ -40,6 +40,12 @@ export function authTransitionCopy() {
   return copy();
 }
 
+// preloadDashboardRoute warms the dashboard route chunk so it mounts instantly
+// on navigation and shows its own skeleton loader (no full-screen overlay text).
+export function preloadDashboardRoute(): Promise<unknown> {
+  return import("~/routes/dashboard").catch(() => undefined);
+}
+
 // prefetchDashboardForAuth loads dashboard data during the auth transition.
 export async function prefetchDashboardForAuth(): Promise<DashboardPayload | undefined> {
   if (prefetchedDashboard) {

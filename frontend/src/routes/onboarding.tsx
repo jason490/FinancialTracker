@@ -1,6 +1,6 @@
 import { Title } from "@solidjs/meta";
 import { useNavigate } from "@solidjs/router";
-import { Show, createEffect, createResource, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createResource, createSignal } from "solid-js";
 import OnboardingConnectStep from "~/components/onboarding/OnboardingConnectStep";
 import OnboardingPlanStep from "~/components/onboarding/OnboardingPlanStep";
 import OnboardingWelcomeStep from "~/components/onboarding/OnboardingWelcomeStep";
@@ -9,9 +9,8 @@ import OnboardingLayout from "~/layouts/OnboardingLayout";
 import { completeOnboarding } from "~/lib/auth";
 import { useAuth } from "~/lib/auth-context";
 import {
-  beginAuthTransition,
   endAuthTransition,
-  prefetchDashboardForAuth,
+  preloadDashboardRoute,
 } from "~/lib/auth-transition";
 import { getConnections } from "~/lib/connections";
 import { getSubscription } from "~/lib/subscription";
@@ -30,10 +29,6 @@ export default function OnboardingPage() {
 
   const subscriptionsEnabled = () => subscription()?.subscriptions_enabled !== false;
 
-  onMount(() => {
-    endAuthTransition();
-  });
-
   createEffect(() => {
     if (loading()) {
       return;
@@ -41,13 +36,23 @@ export default function OnboardingPage() {
 
     const profile = user();
     if (!profile) {
+      endAuthTransition();
       navigate("/login", { replace: true });
       return;
     }
 
     if (profile.onboarding_completed) {
+      // Let the dashboard take over the overlay handoff.
       navigate("/dashboard", { replace: true });
+      return;
     }
+
+    // Hold the post-auth overlay until the first wizard step can render with
+    // its data resolved, so the handoff from login/SSO has no blank flash.
+    if (subscription.loading) {
+      return;
+    }
+    endAuthTransition();
   });
 
   createEffect(() => {
@@ -65,14 +70,11 @@ export default function OnboardingPage() {
     try {
       await completeOnboarding();
       await refetch();
-      beginAuthTransition({
-        title: "You're all set",
-        hint: "Opening your dashboard",
-      });
-      await prefetchDashboardForAuth();
+      // Preload the dashboard route so it mounts instantly with its own
+      // skeleton loader — no "You're all set" overlay text.
+      await preloadDashboardRoute();
       navigate("/dashboard", { replace: true });
     } catch (err) {
-      endAuthTransition();
       setError(err instanceof Error ? err.message : "Failed to finish onboarding");
       setFinishing(false);
     }

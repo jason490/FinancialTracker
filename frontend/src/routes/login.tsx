@@ -4,11 +4,10 @@ import { createSignal, Show } from "solid-js";
 import AuthLayout, { type AuthTransitionPhase } from "~/layouts/AuthLayout";
 import FormError from "~/components/auth/FormError";
 import SSOButtons from "~/components/auth/SSOButtons";
-import { login } from "~/lib/auth";
+import { login, postAuthPath } from "~/lib/auth";
 import {
   beginAuthTransition,
-  authTransitionActive,
-  prefetchDashboardForAuth,
+  preloadDashboardRoute,
 } from "~/lib/auth-transition";
 import { RedirectIfAuth, useAuth } from "~/lib/auth-context";
 import styles from "~/styles/auth.module.css";
@@ -48,12 +47,22 @@ export default function LoginPage() {
     try {
       await login(data);
       setTransitionPhase("success");
-      beginAuthTransition();
-      await refetch();
+      const profile = await refetch();
       await wait(SUCCESS_MS);
       setTransitionPhase("exiting");
-      await Promise.all([wait(EXIT_MS), prefetchDashboardForAuth()]);
-      navigate("/dashboard");
+      const destination = postAuthPath(profile);
+      if (destination === "/dashboard") {
+        // Preload the dashboard route chunk so it mounts instantly and shows
+        // its own skeleton loader — no full-screen "Opening your dashboard"
+        // overlay needed.
+        await Promise.all([wait(EXIT_MS), preloadDashboardRoute()]);
+      } else {
+        // New users go to onboarding (no skeleton of its own); keep the overlay
+        // up across the route change until the wizard is ready to render.
+        beginAuthTransition();
+        await wait(EXIT_MS);
+      }
+      navigate(destination);
     } catch (err: any) {
       setTransitionPhase("idle");
       setError(err.message || "Login failed");

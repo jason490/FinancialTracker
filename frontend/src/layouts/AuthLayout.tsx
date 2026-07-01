@@ -63,8 +63,7 @@ export default function AuthLayout(props: AuthLayoutProps) {
           <div class={styles.transitionRing}>
             <span class={styles.transitionCheck} />
           </div>
-          <p class={styles.transitionLabel}>Welcome back</p>
-          <p class={styles.transitionHint}>Opening your dashboard</p>
+
         </div>
       </section>
     </div>

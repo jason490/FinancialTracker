@@ -46,6 +46,16 @@ export type CompleteConnectionRequest = {
   session_id?: string;
 };
 
+export type RegistrationConfigResponse = {
+  registration_code_required: boolean;
+  code_expires_in_seconds: number;
+};
+
+export type CreateRegistrationCodeResponse = {
+  code: string;
+  expires_at: number;
+};
+
 export type LoginRequest = {
   email: string;
   password: string;
@@ -58,6 +68,7 @@ export type RegisterRequest = {
   email: string;
   password: string;
   confirm_password: string;
+  registration_code: string;
 };
 
 export type ForgotPasswordRequest = {
@@ -252,6 +263,8 @@ export type SettingsProfile = {
   theme_preference: string;
   has_password: boolean;
   sso_providers: string[];
+  is_registration_admin: boolean;
+  registration_code_required: boolean;
 };
 
 export type UpdateProfileRequest = {

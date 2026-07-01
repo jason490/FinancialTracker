@@ -60,29 +60,36 @@ func (s *SSOService) LinkGoogleAccount(userID int64, info GoogleUserInfo) error 
 }
 
 // AuthenticateViaGoogle handles login/registration via Google SSO
-func (s *SSOService) AuthenticateViaGoogle(info GoogleUserInfo) (*models.Session, error) {
+func (s *SSOService) AuthenticateViaGoogle(info GoogleUserInfo, registrationCode string) (*models.Session, error) {
 	// 1. Try finding user by this SSO
 	user, err := s.store.GetUserBySSO("google", info.ID)
 	if err != nil {
 		return nil, fmt.Errorf("database error: %w", err)
 	}
 
-	// 2. If not found, try finding by email and link
+	// 2. If no SSO match, refuse to sign in against an existing account that has
+	//    not explicitly linked this Google login (e.g. a password-only account).
+	//    Auto-linking here would let anyone who controls the email address take
+	//    over the account, so we require the user to sign in normally first and
+	//    link Google from settings.
 	if user == nil {
-		user, err = s.store.GetUserByEmail(info.Email)
+		existing, err := s.store.GetUserByEmail(info.Email)
 		if err != nil {
 			return nil, fmt.Errorf("database error: %w", err)
 		}
-
-		if user != nil {
-			if err := s.store.LinkSSO(user.ID, "google", info.ID); err != nil {
-				return nil, fmt.Errorf("failed to link SSO: %w", err)
-			}
+		if existing != nil {
+			return nil, ErrSSOAccountConflict
 		}
 	}
 
 	// 3. If still not found, create new user
 	if user == nil {
+		if RegistrationGateEnabled() {
+			if err := NewAuthService(s.store, nil).RequireRegistrationCode(registrationCode); err != nil {
+				return nil, err
+			}
+		}
+
 		parts := strings.Split(info.Name, " ")
 		firstName := parts[0]
 		lastName := ""
@@ -98,6 +105,12 @@ func (s *SSOService) AuthenticateViaGoogle(info GoogleUserInfo) (*models.Session
 		}
 		if err := s.store.CreateUser(user); err != nil {
 			return nil, fmt.Errorf("failed to create user: %w", err)
+		}
+		if RegistrationGateEnabled() {
+			if err := NewAuthService(s.store, nil).ValidateAndConsumeRegistrationCode(registrationCode, user.ID); err != nil {
+				_ = s.store.DeleteUser(user.ID)
+				return nil, err
+			}
 		}
 		if err := s.store.LinkSSO(user.ID, "google", info.ID); err != nil {
 			return nil, fmt.Errorf("failed to link SSO after registration: %w", err)
@@ -120,7 +133,7 @@ func (s *SSOService) AuthenticateViaGoogle(info GoogleUserInfo) (*models.Session
 }
 
 // CompleteGoogleLogin exchanges an OAuth code and returns a new session.
-func (s *SSOService) CompleteGoogleLogin(ctx context.Context, config *oauth2.Config, code string) (*models.Session, error) {
+func (s *SSOService) CompleteGoogleLogin(ctx context.Context, config *oauth2.Config, code, registrationCode string) (*models.Session, error) {
 	token, err := config.Exchange(ctx, code)
 	if err != nil {
 		return nil, errors.New("authentication failed")
@@ -131,7 +144,7 @@ func (s *SSOService) CompleteGoogleLogin(ctx context.Context, config *oauth2.Con
 		return nil, err
 	}
 
-	return s.AuthenticateViaGoogle(userInfo)
+	return s.AuthenticateViaGoogle(userInfo, registrationCode)
 }
 
 // FetchGoogleUserInfo retrieves profile data from Google's userinfo endpoint.
@@ -167,17 +180,19 @@ func (s *SSOService) GetUserForSession(sessionID string) (*models.User, error) {
 
 // APIOAuthState contains the decoded OAuth state for API clients.
 type APIOAuthState struct {
-	ReturnTo string
-	Mode     string
+	ReturnTo         string
+	Mode             string
+	RegistrationCode string
 }
 
 // BuildAPIOAuthState encodes the frontend return URL and OAuth mode into a secure state value.
-func (s *SSOService) BuildAPIOAuthState(returnTo, mode string) string {
+func (s *SSOService) BuildAPIOAuthState(returnTo, mode, registrationCode string) string {
 	nonce := uuid.New().String()
 	if mode == "" {
 		mode = "login"
 	}
-	payload := fmt.Sprintf("%s|%s|%d|%s", returnTo, nonce, time.Now().Unix(), mode)
+	registrationCode = strings.ToUpper(strings.TrimSpace(registrationCode))
+	payload := fmt.Sprintf("%s|%s|%d|%s|%s", returnTo, nonce, time.Now().Unix(), mode, registrationCode)
 
 	encrypted, err := utils.Encrypt(payload)
 	if err != nil {
@@ -209,14 +224,19 @@ func (s *SSOService) ParseAPIState(state string) (*APIOAuthState, error) {
 	if len(parts) >= 4 && parts[3] != "" {
 		mode = parts[3]
 	}
+	registrationCode := ""
+	if len(parts) >= 5 {
+		registrationCode = parts[4]
+	}
 
 	if returnTo == "" {
 		returnTo = defaultAPIReturnTo
 	}
 
 	return &APIOAuthState{
-		ReturnTo: returnTo,
-		Mode:     mode,
+		ReturnTo:         returnTo,
+		Mode:             mode,
+		RegistrationCode: registrationCode,
 	}, nil
 }
 
@@ -253,7 +273,7 @@ func (s *SSOService) CompleteAPICallback(
 		return nil, err
 	}
 
-	session, err := s.CompleteGoogleLogin(ctx, config, code)
+	session, err := s.CompleteGoogleLogin(ctx, config, code, oauthState.RegistrationCode)
 	if err != nil {
 		return &APICallbackResult{ReturnTo: oauthState.ReturnTo}, err
 	}

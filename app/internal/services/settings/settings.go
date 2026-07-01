@@ -3,6 +3,7 @@ package settings
 import (
 	"FinancialTracker/internal/models"
 	"FinancialTracker/internal/models/external"
+	"FinancialTracker/internal/services/auth"
 	"FinancialTracker/internal/storage"
 	"FinancialTracker/internal/utils"
 	"errors"
@@ -41,12 +42,14 @@ func (s *SettingsService) GetProfile(userID int64) (*external.SettingsProfile, e
 	}
 
 	return &external.SettingsProfile{
-		FirstName:       user.FirstName,
-		LastName:        user.LastName,
-		Email:           user.Email,
-		ThemePreference: user.ThemePreference,
-		HasPassword:     user.PasswordHash != "",
-		SSOProviders:    providers,
+		FirstName:                user.FirstName,
+		LastName:                 user.LastName,
+		Email:                    user.Email,
+		ThemePreference:          user.ThemePreference,
+		HasPassword:              user.PasswordHash != "",
+		SSOProviders:             providers,
+		IsRegistrationAdmin:      auth.IsRegistrationAdmin(user.Email),
+		RegistrationCodeRequired: auth.RegistrationGateEnabled(),
 	}, nil
 }
 

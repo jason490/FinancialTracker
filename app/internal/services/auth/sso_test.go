@@ -10,7 +10,7 @@ func TestBuildAndParseAPIOAuthState(t *testing.T) {
 	svc := NewSSOService(nil)
 	returnTo := "http://localhost/auth/sso/complete"
 
-	state := svc.BuildAPIOAuthState(returnTo, "login")
+	state := svc.BuildAPIOAuthState(returnTo, "login", "")
 	if state == apiStatePrefix+"error" {
 		t.Fatalf("BuildAPIOAuthState() returned error state")
 	}

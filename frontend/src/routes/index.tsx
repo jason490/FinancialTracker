@@ -1,8 +1,9 @@
 import { Title } from "@solidjs/meta";
 import { For } from "solid-js";
 import DashboardPreview from "~/components/home/DashboardPreview";
-import { BankIcon, DashboardIcon, SyncIcon, TagsIcon } from "~/components/icons";
+import { BankIcon, DashboardIcon, GitHubIcon, SyncIcon, TagsIcon } from "~/components/icons";
 import { RedirectIfAuth } from "~/lib/auth-context";
+import { GITHUB_REPO_URL } from "~/lib/constants";
 import styles from "~/styles/home.module.css";
 
 const features = [
@@ -54,7 +55,16 @@ export default function IntroPage() {
             Financial Tracker
           </a>
           <nav class={styles.navActions} aria-label="Account">
-            <a class={styles.navGhost} href="/login">
+            <a
+              class={styles.navGhost}
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GitHubIcon size={16} />
+              GitHub
+            </a>
+            <a class={`${styles.navGhost} ${styles.navGhostSignIn}`} href="/login">
               Sign in
             </a>
             <a class={styles.navCta} href="/register">
@@ -183,8 +193,19 @@ export default function IntroPage() {
         </main>
 
         <footer class={styles.footer}>
-          <p>Financial Tracker</p>
-          <p class={styles.footerMuted}>Clarity for every dollar you move.</p>
+          <div>
+            <p>Financial Tracker</p>
+            <p class={styles.footerMuted}>Clarity for every dollar you move.</p>
+          </div>
+          <a
+            class={styles.footerLink}
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHubIcon size={16} />
+            <span>github.com/jason490/FinancialTracker</span>
+          </a>
         </footer>
       </div>
     </RedirectIfAuth>

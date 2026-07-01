@@ -52,3 +52,18 @@ func TestSubscriptionsEnabled(t *testing.T) {
 		t.Fatal("expected subscriptions disabled")
 	}
 }
+
+func TestRegistrationGateEnabled(t *testing.T) {
+	t.Setenv("SUBSCRIPTIONS_ENABLED", "false")
+	if !RegistrationGateEnabled() {
+		t.Fatal("expected registration gate when subscriptions disabled")
+	}
+}
+
+func TestRegistrationAdminEmails(t *testing.T) {
+	t.Setenv("REGISTRATION_ADMIN_EMAILS", " admin@example.com ; ops@example.com ")
+	emails := RegistrationAdminEmails()
+	if len(emails) != 2 || emails[0] != "admin@example.com" || emails[1] != "ops@example.com" {
+		t.Fatalf("RegistrationAdminEmails() = %#v", emails)
+	}
+}

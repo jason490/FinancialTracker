@@ -6,6 +6,7 @@ import { logout } from "~/lib/auth";
 import { useAuth } from "~/lib/auth-context";
 import type { SettingsProfile } from "~/lib/types";
 import DeleteAccountSection from "~/components/settings/DeleteAccountSection";
+import RegistrationInvitesPanel from "~/components/settings/RegistrationInvitesPanel";
 import { LogOutIcon } from "~/components/icons";
 import styles from "~/styles/settings.module.css";
 
@@ -306,6 +307,12 @@ export default function AccountPanel(props: AccountPanelProps) {
           </div>
         </div>
       </section>
+
+      <Show
+        when={props.profile.is_registration_admin && props.profile.registration_code_required}
+      >
+        <RegistrationInvitesPanel onMessage={props.onMessage} />
+      </Show>
 
       <DeleteAccountSection
         profile={props.profile}

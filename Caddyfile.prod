@@ -1,10 +1,10 @@
 {
     admin off
+    email {$ACME_EMAIL}
 }
 
 # SITE_HOST should be a bare hostname (e.g. yourdomain.com). Caddy provisions TLS
 # automatically via Let's Encrypt and redirects HTTP to HTTPS.
-# For localhost, Caddy uses an internal CA (browsers will warn until trusted).
 {$SITE_HOST} {
     handle /api/* {
         reverse_proxy backend:8080

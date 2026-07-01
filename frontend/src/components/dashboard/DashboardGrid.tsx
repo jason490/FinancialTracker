@@ -7,6 +7,7 @@ import {
   onCleanup,
   type Accessor,
 } from "solid-js";
+import { createStore } from "solid-js/store";
 import { DragHandle, EyeIcon, EyeOffIcon } from "~/components/icons";
 import WidgetBody from "~/components/dashboard/WidgetBody";
 import { saveDashboardLayout } from "~/lib/dashboard";
@@ -31,6 +32,7 @@ export default function DashboardGrid(props: DashboardGridProps) {
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [deviceType, setDeviceType] = createSignal<"desktop" | "mobile">("desktop");
+  const [visibility, setVisibility] = createStore<Record<string, boolean>>({});
 
   createEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,6 +51,9 @@ export default function DashboardGrid(props: DashboardGridProps) {
     if (payload) {
       const widgets = deviceType() === "mobile" ? payload.layout.mobile : payload.layout.desktop;
       setLayout([...widgets].sort((a, b) => a.order - b.order));
+      const vis: Record<string, boolean> = {};
+      widgets.forEach(w => vis[w.id] = w.visible);
+      setVisibility(vis);
     }
   });
 
@@ -102,13 +107,12 @@ export default function DashboardGrid(props: DashboardGridProps) {
   onCleanup(() => destroySortable());
 
   const toggleVisibility = (id: string) => {
-    setLayout((current) => {
-      const widget = current.find((entry) => entry.id === id);
-      if (widget) {
-        widget.visible = !widget.visible;
-      }
-      return current.slice();
-    });
+    setVisibility(id, (v) => !v);
+    const widgets = layout();
+    const widget = widgets.find((entry) => entry.id === id);
+    if (widget) {
+      widget.visible = !widget.visible;
+    }
   };
 
   const handleSave = async () => {
@@ -172,7 +176,7 @@ export default function DashboardGrid(props: DashboardGridProps) {
                     [styles.gridItemReveal]: props.reveal,
                   }}
                   data-widget-id={widget.id}
-                  data-visible={widget.visible ? "true" : "false"}
+                  data-visible={visibility[widget.id] ? "true" : "false"}
                   style={{
                     "--widget-min-rows": String(meta?.minRows ?? 2),
                     "--widget-max-rows": String(meta?.maxRows ?? 3),
@@ -192,12 +196,12 @@ export default function DashboardGrid(props: DashboardGridProps) {
                       <button
                         type="button"
                         class={styles.iconButton}
-                        aria-label={widget.visible ? "Hide widget" : "Show widget"}
-                        title={widget.visible ? "Hide widget" : "Show widget"}
+                        aria-label={visibility[widget.id] ? "Hide widget" : "Show widget"}
+                        title={visibility[widget.id] ? "Hide widget" : "Show widget"}
                         onClick={() => toggleVisibility(widget.id)}
                       >
                         <Show
-                          when={widget.visible}
+                          when={visibility[widget.id]}
                           fallback={<EyeOffIcon />}
                         >
                           <EyeIcon />
@@ -208,7 +212,7 @@ export default function DashboardGrid(props: DashboardGridProps) {
 
                   <div
                     class={styles.widgetPreview}
-                    classList={{ [styles.widgetHiddenPreview]: props.editMode() && !widget.visible }}
+                    classList={{ [styles.widgetHiddenPreview]: props.editMode() && !visibility[widget.id] }}
                   >
                     <WidgetBody
                       data={payload()}

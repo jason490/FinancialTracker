@@ -1327,3 +1327,137 @@
     transform: translateY(0);
   }
 }
+
+.inviteSection {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.inviteHeader {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.inviteIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.inviteCard {
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 1rem;
+  padding: 1.1rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--accent-soft) 45%, transparent), transparent),
+    color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 80%, transparent);
+}
+
+.inviteEmpty {
+  display: grid;
+  gap: 1rem;
+}
+
+.inviteEmptyCopy {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  max-width: 36rem;
+}
+
+.inviteReveal {
+  display: grid;
+  gap: 0.75rem;
+  animation: inviteReveal 0.45s ease both;
+}
+
+@keyframes inviteReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inviteLabel {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.inviteCodeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inviteCode {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  letter-spacing: 0.22em;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  color: var(--text);
+}
+
+.inviteExpiry {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.inviteActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.pageFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.pageFooterCopy {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.pageFooterLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.pageFooterLink:hover {
+  color: var(--accent);
+}

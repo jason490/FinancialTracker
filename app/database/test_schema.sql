@@ -2,6 +2,7 @@
 -- the full schema. Keep this in sync with schema.sql (same tables/columns).
 
 -- Drop tables in reverse order of dependencies
+DROP TABLE IF EXISTS registration_codes;
 DROP TABLE IF EXISTS password_reset_codes;
 DROP TABLE IF EXISTS dashboard_layouts;
 DROP TABLE IF EXISTS sessions;
@@ -229,6 +230,23 @@ CREATE TABLE password_reset_codes (
 
 CREATE INDEX idx_password_reset_codes_user_active
     ON password_reset_codes(user_id, used_at, expires_at);
+
+-- Temporary registration invite codes (hashed, single-use; used when subscriptions are disabled)
+CREATE TABLE registration_codes (
+    id INTEGER PRIMARY KEY,
+    code_hash TEXT NOT NULL,
+    created_by_user_id INTEGER,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    used_at INTEGER,
+    used_by_user_id INTEGER,
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (used_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_registration_codes_active
+    ON registration_codes(used_at, expires_at);
 
 -- Sessions for authentication
 CREATE TABLE sessions (

@@ -8,7 +8,7 @@ interface AuthContextValue {
   user: () => SessionProfile | undefined;
   loading: () => boolean;
   error: () => any;
-  refetch: () => void;
+  refetch: () => Promise<SessionProfile | undefined>;
   isAuthenticated: () => boolean;
 }
 

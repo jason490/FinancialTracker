@@ -2,12 +2,14 @@ package external
 
 // SettingsProfile is the authenticated user's settings payload.
 type SettingsProfile struct {
-	FirstName       string   `json:"first_name"`
-	LastName        string   `json:"last_name"`
-	Email           string   `json:"email"`
-	ThemePreference string   `json:"theme_preference"`
-	HasPassword     bool     `json:"has_password"`
-	SSOProviders    []string `json:"sso_providers"`
+	FirstName                string   `json:"first_name"`
+	LastName                 string   `json:"last_name"`
+	Email                    string   `json:"email"`
+	ThemePreference          string   `json:"theme_preference"`
+	HasPassword              bool     `json:"has_password"`
+	SSOProviders             []string `json:"sso_providers"`
+	IsRegistrationAdmin      bool     `json:"is_registration_admin"`
+	RegistrationCodeRequired bool     `json:"registration_code_required"`
 }
 
 // UpdateProfileRequest updates the user's display name.

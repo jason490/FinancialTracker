@@ -31,7 +31,11 @@ func NewSSOHandler(
 
 // HandleGoogleLogin redirects to Google's consent page for API clients.
 func (h *SSOHandler) HandleGoogleLogin(c *echo.Context) error {
-	state := h.ssoService.BuildAPIOAuthState(c.QueryParam("return_to"), c.QueryParam("action"))
+	state := h.ssoService.BuildAPIOAuthState(
+		c.QueryParam("return_to"),
+		c.QueryParam("action"),
+		c.QueryParam("registration_code"),
+	)
 	authURL := h.googleOauthConfig.AuthCodeURL(state)
 	return c.Redirect(http.StatusTemporaryRedirect, authURL)
 }
@@ -64,7 +68,17 @@ func (h *SSOHandler) HandleGoogleCallback(c *echo.Context) error {
 		}
 
 		if result != nil && result.ReturnTo != "" {
-			return redirectWithError(c, result.ReturnTo, "authentication_failed")
+			code := "authentication_failed"
+			if errors.Is(err, auth.ErrSSOAccountConflict) {
+				code = "sso_account_exists"
+			}
+			if errors.Is(err, auth.ErrInvalidRegistrationCode) {
+				code = "invalid_registration_code"
+			}
+			if errors.Is(err, auth.ErrRegistrationCodeRequired) {
+				code = "registration_code_required"
+			}
+			return redirectWithError(c, result.ReturnTo, code)
 		}
 
 		return c.JSON(http.StatusBadRequest, ErrorResponse("invalid_state", "Invalid OAuth state"))

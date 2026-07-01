@@ -397,6 +397,26 @@ func (s *Storage) CountPasswordResetCodesSince(userID int64, since int64) (int, 
 	return queries.CountPasswordResetCodesSince(s.db, userID, since)
 }
 
+// CreateRegistrationCode stores a hashed invite code.
+func (s *Storage) CreateRegistrationCode(createdByUserID *int64, codeHash string, expiresAt int64) error {
+	return queries.CreateRegistrationCode(s.db, createdByUserID, codeHash, expiresAt)
+}
+
+// ListActiveRegistrationCodes returns unused, unexpired invite codes.
+func (s *Storage) ListActiveRegistrationCodes() ([]*models.RegistrationCode, error) {
+	return queries.ListActiveRegistrationCodes(s.db)
+}
+
+// IncrementRegistrationCodeAttempts bumps the failed-attempt counter for an invite code.
+func (s *Storage) IncrementRegistrationCodeAttempts(id int64) error {
+	return queries.IncrementRegistrationCodeAttempts(s.db, id)
+}
+
+// MarkRegistrationCodeUsed marks an invite code as consumed.
+func (s *Storage) MarkRegistrationCodeUsed(id, usedByUserID int64) error {
+	return queries.MarkRegistrationCodeUsed(s.db, id, usedByUserID)
+}
+
 // GetDashboardLayout retrieves a user's dashboard widget layout.
 func (s *Storage) GetDashboardLayout(userID int64) (*models.DashboardLayout, error) {
 	return queries.GetDashboardLayout(s.db, userID)

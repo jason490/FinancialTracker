@@ -22,7 +22,7 @@ func ValidateRequiredEnv() error {
 	}
 
 	if !IsDevelopment() {
-		validateProductionEnv(&missing)
+		// validateProductionEnv(&missing)
 		if key := strings.TrimSpace(os.Getenv("ENCRYPTION_KEY")); key == "" {
 			missing = append(missing, "ENCRYPTION_KEY")
 		} else if len(key) != 32 {

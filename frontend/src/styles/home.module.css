@@ -94,6 +94,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
   transition:
     transform 0.2s ease,
     background 0.2s ease,
@@ -630,6 +631,20 @@
   color: var(--text-muted);
 }
 
+.footerLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: var(--accent);
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -672,7 +687,7 @@
 }
 
 @media (max-width: 520px) {
-  .navGhost {
+  .navGhostSignIn {
     display: none;
   }
 

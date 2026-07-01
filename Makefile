@@ -1,4 +1,4 @@
-.PHONY: build test run sync-types prod-build prod-up prod-down prod-logs
+.PHONY: build test run sync-types prod-build prod-up prod-down prod-logs registration-code
 
 sync-types:
 	@cd app && go run scripts/sync_types.go
@@ -20,3 +20,6 @@ prod-down:
 
 prod-logs:
 	docker compose -f docker-compose.prod.yml logs -f
+
+registration-code:
+	@cd app && go run scripts/gen_registration_code.go
