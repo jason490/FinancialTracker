@@ -37,6 +37,17 @@ func TestNetWorthExcludesLiabilitiesFromAssets(t *testing.T) {
 	}
 }
 
+func TestCreditDebtIgnoresAvailableCredit(t *testing.T) {
+	accounts := []models.Account{
+		{Type: "credit", Subtype: "credit card", Balance: 0, AvailableBalance: 10000, Status: "active"},
+		{Type: "credit", Subtype: "credit card", Balance: 500, AvailableBalance: 9500, Status: "active"},
+	}
+	summary := BuildSummary(accounts)
+	if summary.CreditDebt != 500 {
+		t.Errorf("CreditDebt = %v, want 500 (available credit must not count as debt)", summary.CreditDebt)
+	}
+}
+
 func TestHiddenExcludedFromTotals(t *testing.T) {
 	accounts := []models.Account{
 		{Type: "depository", Subtype: "checking", Balance: 1000, Status: "active"},

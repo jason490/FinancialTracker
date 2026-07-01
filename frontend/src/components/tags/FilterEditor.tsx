@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, Index } from "solid-js";
 import { PlusIcon, XIcon } from "~/components/icons";
 import type { TagFilterView } from "~/lib/types";
 import styles from "~/styles/tags.module.css";
@@ -43,14 +43,14 @@ export default function FilterEditor(props: FilterEditorProps) {
       </div>
 
       <div class={styles.filterList}>
-        <For each={props.filters}>
+        <Index each={props.filters}>
           {(filter, index) => (
             <div class={styles.filterRow}>
               <select
                 class={styles.select}
-                value={filter.filter_type}
+                value={filter().filter_type}
                 onChange={(event) =>
-                  updateFilter(index(), { filter_type: event.currentTarget.value })
+                  updateFilter(index, { filter_type: event.currentTarget.value })
                 }
               >
                 <For each={FILTER_TYPES}>
@@ -61,22 +61,22 @@ export default function FilterEditor(props: FilterEditorProps) {
                 class={styles.input}
                 type="text"
                 placeholder="Pattern or value"
-                value={filter.pattern}
+                value={filter().pattern}
                 onInput={(event) =>
-                  updateFilter(index(), { pattern: event.currentTarget.value })
+                  updateFilter(index, { pattern: event.currentTarget.value })
                 }
               />
               <button
                 type="button"
                 class={styles.iconBtn}
                 aria-label="Remove filter"
-                onClick={() => removeFilter(index())}
+                onClick={() => removeFilter(index)}
               >
                 <XIcon size={16} />
               </button>
             </div>
           )}
-        </For>
+        </Index>
         {props.filters.length === 0 && (
           <div class={styles.filterEmpty}>No filters defined for this tag.</div>
         )}

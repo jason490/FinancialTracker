@@ -67,9 +67,6 @@ func IsLiabilityBucket(bucket string) bool {
 func DisplayBalance(acc models.Account, bucket string) float64 {
 	if IsLiabilityBucket(bucket) {
 		bal := acc.Balance
-		if bal == 0 && acc.AvailableBalance != 0 {
-			bal = acc.AvailableBalance
-		}
 		if bal < 0 {
 			return -bal
 		}

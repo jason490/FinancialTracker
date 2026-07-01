@@ -193,12 +193,50 @@ Caddy obtains and renews Let's Encrypt certificates automatically when DNS is co
 
 Build images on a machine with enough RAM, then transfer them to the VPS. The VPS only loads images and starts containers — it never runs `npm` or `go build`.
 
-**One-time VPS setup:** Docker, Compose, repo checkout, `.env` from `env.prod.example`. Do not run `make prod-build` on the VPS.
+#### `.env` on your build machine (local)
+
+Create `.env` from `env.prod.example` with at least your **public URLs** set to the same values the VPS will use. Docker Compose reads these when you run `make prod-build-amd64`:
+
+| Variable | Required to build? | Why |
+|----------|-------------------|-----|
+| `API_PUBLIC_URL` | **Yes** | Baked into the static frontend as `VITE_API_PUBLIC_URL` |
+| `FRONTEND_URL` | **Yes** | Baked into the static frontend as `VITE_FRONTEND_URL` |
+| `SITE_HOST`, `ACME_EMAIL` | No | Only used when containers start (Caddy TLS) |
+| `ENCRYPTION_KEY`, Plaid, Google, SMTP, etc. | No | Not embedded in images; only needed at runtime on the VPS |
+
+Example minimal local `.env` for building:
+
+```bash
+API_PUBLIC_URL=https://yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+```
+
+The backend image is a compiled Go binary — it does not embed secrets or Plaid settings. If you change `API_PUBLIC_URL` or `FRONTEND_URL`, you must rebuild and redeploy the images.
+
+#### `.env` on the VPS (runtime)
+
+Copy `env.prod.example` to `.env` on the VPS and fill in **everything** the running app needs. Compose loads this file when containers start (`env_file` on the backend; `${…}` substitution for proxy and backend URLs).
+
+| Variable | Required on VPS? | Notes |
+|----------|------------------|-------|
+| `SITE_HOST` | **Yes** | Bare hostname for Let's Encrypt (e.g. `yourdomain.com`) |
+| `API_PUBLIC_URL`, `FRONTEND_URL` | **Yes** | Must match what you baked into the frontend at build time |
+| `ACME_EMAIL` | Recommended | Let's Encrypt expiry notices |
+| `ENCRYPTION_KEY` | **Yes** | Exactly 32 bytes |
+| `PLAID_ENV` | **Yes** for live Plaid | Set `production` — `ENV=production` alone does not switch Plaid |
+| `PLAID_CLIENT_ID`, `PLAID_PROD_SECRET` | **Yes** for live Plaid | Use production secret when `PLAID_ENV=production` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | If using Google sign-in | |
+| `MAIL_SMTP_*`, `MAIL_FROM` | **Yes** for password reset | |
+| `SUBSCRIPTIONS_ENABLED`, Stripe vars | As needed | |
+
+After editing `.env` on the VPS, restart containers (`make prod-up-runtime`) — no rebuild required unless URLs changed.
+
+**One-time VPS setup:** Docker, Compose, repo checkout (or at least `docker-compose.prod.yml`, `docker-compose.prod.runtime.yml`, `Caddyfile.prod`, and `.env`). Do not run `make prod-build` on the VPS.
 
 **Each release from your dev machine:**
 
 ```bash
-# Set API_PUBLIC_URL / FRONTEND_URL in .env first (baked into the frontend)
+# .env must have API_PUBLIC_URL and FRONTEND_URL set to production URLs
 make prod-build-amd64
 make prod-export
 scp dist/ft-prod-images.tar.gz user@vps:/tmp/
@@ -208,6 +246,7 @@ scp dist/ft-prod-images.tar.gz user@vps:/tmp/
 
 ```bash
 cd /path/to/FinancialTracker
+# ensure .env exists with full runtime secrets
 make prod-import PROD_EXPORT_ARCHIVE=/tmp/ft-prod-images.tar.gz
 make prod-up-runtime
 ```
@@ -268,8 +307,10 @@ When `SUBSCRIPTIONS_ENABLED=false`, new sign-ups (email or Google) require a one
 | `PORT` | `8080` | API listen port |
 | `DATABASE_PATH` | `./database/main.db` | SQLite file path |
 | `ENCRYPTION_KEY` | — | **Required in production.** Exactly 32 bytes for AES-256 (Plaid token encryption, OAuth state) |
-| `API_PUBLIC_URL` | — | Public API URL (e.g. `https://app.example.com`) |
-| `FRONTEND_URL` | — | Public SPA URL (usually same origin as API in production) |
+| `API_PUBLIC_URL` | — | Public API URL (e.g. `https://app.example.com`). **Build-time:** baked into the frontend image. **Runtime:** passed to the backend container. |
+| `FRONTEND_URL` | — | Public SPA URL (usually same origin as API in production). **Build-time:** baked into the frontend image. **Runtime:** passed to the backend container. |
+| `SITE_HOST` | — | Bare hostname for Caddy TLS (e.g. `app.example.com`). **Runtime only** (VPS). |
+| `ACME_EMAIL` | — | Email for Let's Encrypt notices. **Runtime only** (VPS). |
 
 ### Auth
 
@@ -300,7 +341,7 @@ When `SUBSCRIPTIONS_ENABLED=false`, new sign-ups (email or Google) require a one
 |----------|---------|-------------|
 | `FINANCIAL_PROVIDER` | `plaid` | `plaid` or `stripe` |
 | `PLAID_CLIENT_ID` | — | Plaid application ID |
-| `PLAID_ENV` | `sandbox` (dev) | `sandbox` or `production` |
+| `PLAID_ENV` | `sandbox` (dev) | `sandbox` or `production`. Must be set explicitly on the VPS — the Plaid client does not infer this from `ENV`. |
 | `PLAID_SANDBOX_SECRET` | — | Plaid sandbox secret |
 | `PLAID_PROD_SECRET` | — | Plaid production secret |
 | `PLAID_WEBHOOK_URL` | — | Optional; defaults to `{API_PUBLIC_URL}/api/v1/plaid/webhook` |
