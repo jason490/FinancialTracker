@@ -53,5 +53,11 @@ prod-down:
 prod-logs:
 	$(PROD_COMPOSE) logs -f
 
+REGISTRATION_COMPOSE ?= $(PROD_COMPOSE)
+
 registration-code:
-	@cd app && go run scripts/gen_registration_code.go
+	@if $(REGISTRATION_COMPOSE) ps --status running -q backend 2>/dev/null | grep -q .; then \
+		$(REGISTRATION_COMPOSE) exec -T backend /app/main gen-registration-code; \
+	else \
+		$(REGISTRATION_COMPOSE) run --rm --no-deps -T backend /app/main gen-registration-code; \
+	fi

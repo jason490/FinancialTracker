@@ -1,6 +1,7 @@
 package main
 
 import (
+	"FinancialTracker/internal/cmd"
 	"FinancialTracker/internal/config"
 	"FinancialTracker/internal/models"
 	"FinancialTracker/internal/server"
@@ -22,6 +23,11 @@ import (
 
 func main() {
 	loadEnvFiles()
+
+	if len(os.Args) > 1 && os.Args[1] == "gen-registration-code" {
+		cmd.GenRegistrationCodeOrExit()
+		return
+	}
 
 	if err := config.ValidateRequiredEnv(); err != nil {
 		log.Fatal(err)

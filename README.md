@@ -229,7 +229,7 @@ make prod-deploy VPS_HOST=user@vps VPS_PATH=/path/to/FinancialTracker
 | `make build` | Sync Go → TypeScript types and compile the Go binary to `bin/main` |
 | `make run` | Build and run the API locally |
 | `make sync-types` | Regenerate `frontend/src/lib/types.ts` from Go models |
-| `make registration-code` | Issue a bootstrap invite code (requires `SUBSCRIPTIONS_ENABLED=false`) |
+| `make registration-code` | Issue a bootstrap invite code in the production backend container (`SUBSCRIPTIONS_ENABLED=false`) |
 | `make prod-build` | Build production Docker images |
 | `make prod-build-amd64` | Build production images for `linux/amd64` (VPS deploy) |
 | `make prod-export` | Save proxy + backend images to `dist/ft-prod-images.tar.gz` |
@@ -250,7 +250,7 @@ When `SUBSCRIPTIONS_ENABLED=false`, new sign-ups (email or Google) require a one
 - Set `REGISTRATION_ADMIN_EMAILS=admin@example.com;ops@example.com` (semicolon-separated)
 - In development, `test@test.com` is always an admin
 - Signed-in admins: **Settings → Account → Invite codes**, or `POST /api/v1/admin/registration-codes`
-- First deploy without an admin session: `make registration-code`
+- First deploy without an admin session: `make registration-code` (runs inside the production backend container against the live database volume; rebuild images after upgrading if the command is missing)
 
 **Codes**
 - 8-character alphanumeric, single-use, **48-hour** expiry
