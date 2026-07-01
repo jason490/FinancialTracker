@@ -29,6 +29,17 @@
   align-content: center;
 }
 
+.heroBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.heroBrand .eyebrow {
+  margin: 0;
+}
+
 .brand {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 4vw, 4rem);

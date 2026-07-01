@@ -1,0 +1,18 @@
+.logo {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent) 24%, transparent));
+}
+
+.frame {
+  fill: var(--accent);
+}
+
+.bar {
+  fill: #fff;
+}
+
+.trend {
+  fill: none;
+  stroke: #fff;
+}

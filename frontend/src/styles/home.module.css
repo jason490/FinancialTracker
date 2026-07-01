@@ -67,17 +67,6 @@
   color: var(--text);
 }
 
-.brandMark {
-  width: 1.65rem;
-  height: 1.65rem;
-  border-radius: 0.45rem;
-  background:
-    linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #000));
-  box-shadow:
-    0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 25%, transparent);
-}
-
 .navActions {
   display: flex;
   align-items: center;

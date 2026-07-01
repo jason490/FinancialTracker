@@ -1,6 +1,7 @@
 import { A, useLocation, useNavigate } from "@solidjs/router";
 import { ParentProps, createEffect, Show } from "solid-js";
 import { DashboardIcon, SettingsIcon, TagsIcon, TransactionsIcon } from "~/components/icons";
+import AppLogo from "~/components/icons/AppLogo";
 import { useAuth } from "~/lib/auth-context";
 import { postAuthPath } from "~/lib/auth";
 import styles from "./AppLayout.module.css";
@@ -37,7 +38,10 @@ export default function AppLayout(props: ParentProps) {
     <Show when={auth.isAuthenticated()}>
       <div class={styles.layout}>
         <header class={styles.navbar}>
-          <div class={styles.navBrand}>FinancialTracker</div>
+          <A href="/dashboard" class={styles.navBrand}>
+            <AppLogo size={28} />
+            <span>Financial Tracker</span>
+          </A>
           <nav class={styles.navLinks}>
             {navItems.map((item) => (
               <A

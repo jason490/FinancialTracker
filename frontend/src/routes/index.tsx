@@ -2,6 +2,7 @@ import { Title } from "@solidjs/meta";
 import { For } from "solid-js";
 import DashboardPreview from "~/components/home/DashboardPreview";
 import { BankIcon, DashboardIcon, GitHubIcon, SyncIcon, TagsIcon } from "~/components/icons";
+import AppLogo from "~/components/icons/AppLogo";
 import { RedirectIfAuth } from "~/lib/auth-context";
 import { GITHUB_REPO_URL } from "~/lib/constants";
 import styles from "~/styles/home.module.css";
@@ -51,7 +52,7 @@ export default function IntroPage() {
 
         <header class={styles.nav}>
           <a class={styles.brand} href="/">
-            <span class={styles.brandMark} aria-hidden="true" />
+            <AppLogo size={26} />
             Financial Tracker
           </a>
           <nav class={styles.navActions} aria-label="Account">

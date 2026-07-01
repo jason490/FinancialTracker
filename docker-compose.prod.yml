@@ -6,12 +6,17 @@
 #   make prod-build
 #   make prod-up
 #
+# Remote deploy (build locally, run on VPS — see README):
+#   make prod-build-amd64 && make prod-export
+#   # on VPS: make prod-import && make prod-up-runtime
+#
 # Caddy obtains and renews Let's Encrypt certificates when SITE_HOST resolves to
 # this server and ports 80/443 are reachable. Re-run `make prod-build` after
 # changing API_PUBLIC_URL or FRONTEND_URL (baked into the SPA).
 
 services:
   proxy:
+    image: financialtracker-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile.proxy.prod
@@ -33,6 +38,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: financialtracker-backend:latest
     build:
       context: ./app
       dockerfile: Dockerfile.prod

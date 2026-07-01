@@ -1,0 +1,13 @@
+# VPS runtime override: use pre-loaded images only (no build on the server).
+#
+# Usage on VPS after `make prod-import`:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.prod.runtime.yml up -d
+
+services:
+  proxy:
+    image: financialtracker-proxy:latest
+    build: !reset null
+
+  backend:
+    image: financialtracker-backend:latest
+    build: !reset null

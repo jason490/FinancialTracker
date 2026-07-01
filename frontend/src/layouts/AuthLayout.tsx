@@ -1,4 +1,5 @@
 import type { JSX } from "solid-js";
+import AppLogo from "~/components/icons/AppLogo";
 import { authTransitionActive } from "~/lib/auth-transition";
 import styles from "~/styles/auth.module.css";
 
@@ -25,7 +26,10 @@ export default function AuthLayout(props: AuthLayoutProps) {
       }}
     >
       <section class={styles.hero}>
-        <p class={styles.eyebrow}>Financial Tracker</p>
+        <div class={styles.heroBrand}>
+          <AppLogo size={34} />
+          <p class={styles.eyebrow}>Financial Tracker</p>
+        </div>
         <h1 class={styles.brand}>Clarity for every dollar you move.</h1>
         <p class={styles.lede}>
           Sync accounts through Plaid, automate tagging, and shape a dashboard that
