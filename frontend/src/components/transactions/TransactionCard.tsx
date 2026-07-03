@@ -1,4 +1,5 @@
 import { For, Show } from "solid-js";
+import { EyeOffIcon } from "~/components/icons";
 import type { TransactionView } from "~/lib/types";
 import { formatAmount, formatDate } from "~/lib/format";
 import { tagColorHex } from "~/lib/tag-colors";
@@ -15,9 +16,16 @@ export function TransactionCard(props: TransactionCardProps) {
     return amount > 0 ? styles.amountExpense : styles.amountIncome;
   };
 
+  // A transaction is excluded from monthly totals when any of its tags is hidden.
+  const isExcluded = () => props.transaction.tags?.some((tag) => tag.is_hidden) ?? false;
+
   return (
     <div
-      class={`${styles.transactionCard} ${props.selected ? styles.transactionCardSelected : ""}`}
+      classList={{
+        [styles.transactionCard]: true,
+        [styles.transactionCardSelected]: props.selected,
+        [styles.transactionCardExcluded]: isExcluded(),
+      }}
     >
       <input
         type="checkbox"
@@ -41,9 +49,12 @@ export function TransactionCard(props: TransactionCardProps) {
             <For each={props.transaction.tags}>
               {(tag) => (
                 <span
-                  class={styles.tagChip}
+                  classList={{ [styles.tagChip]: true, [styles.tagChipHidden]: tag.is_hidden }}
                   style={{ "--tag-color": tagColorHex(tag.color) }}
                 >
+                  <Show when={tag.is_hidden}>
+                    <EyeOffIcon size={11} />
+                  </Show>
                   {tag.name}
                 </span>
               )}
@@ -55,6 +66,12 @@ export function TransactionCard(props: TransactionCardProps) {
         <div class={`${styles.transactionAmount} ${amountClass(props.transaction.amount)}`}>
           {formatAmount(props.transaction.amount)}
         </div>
+        <Show when={isExcluded()}>
+          <span class={styles.excludedBadge} title="Excluded from income & spending totals">
+            <EyeOffIcon size={11} />
+            Not counted
+          </span>
+        </Show>
         <Show when={props.transaction.pending}>
           <span class={styles.pendingBadge}>Pending</span>
         </Show>

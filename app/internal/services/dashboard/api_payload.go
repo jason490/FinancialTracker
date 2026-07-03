@@ -92,8 +92,9 @@ func mapTransactionView(tx models.Transaction) external.DashboardTransactionView
 		view.Tags = make([]external.DashboardTagView, len(tx.Tags))
 		for i, tag := range tx.Tags {
 			view.Tags[i] = external.DashboardTagView{
-				Name:  tag.Name,
-				Color: tag.Color,
+				Name:     tag.Name,
+				Color:    tag.Color,
+				IsHidden: tag.IsHidden,
 			}
 		}
 	}

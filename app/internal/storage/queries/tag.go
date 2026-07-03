@@ -36,12 +36,12 @@ func GetCategoriesByUserID(db *sql.DB, userID int64) ([]models.Category, error) 
 }
 
 func GetTagByUserIDAndName(db *sql.DB, userID int64, name string) (*models.Tag, error) {
-	query := `SELECT t.id, t.category_id, t.name, t.color, t.created_at 
+	query := `SELECT t.id, t.category_id, t.name, t.color, t.is_hidden, t.created_at 
               FROM tags t 
               JOIN categories c ON t.category_id = c.id 
               WHERE c.user_id = ? AND t.name = ? COLLATE NOCASE`
 	var t models.Tag
-	err := db.QueryRow(query, userID, name).Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.CreatedAt)
+	err := db.QueryRow(query, userID, name).Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.IsHidden, &t.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -52,10 +52,10 @@ func GetTagByUserIDAndName(db *sql.DB, userID int64, name string) (*models.Tag, 
 }
 
 // CreateTag creates a new tag under a category, verifying the user owns the category
-func CreateTag(db *sql.DB, userID int64, categoryID int64, name string, color string) (int64, error) {
-    query := `INSERT INTO tags (category_id, name, color) 
-              SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM categories WHERE id = ? AND user_id = ?)`
-    result, err := db.Exec(query, categoryID, name, color, categoryID, userID)
+func CreateTag(db *sql.DB, userID int64, categoryID int64, name string, color string, isHidden bool) (int64, error) {
+    query := `INSERT INTO tags (category_id, name, color, is_hidden) 
+              SELECT ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM categories WHERE id = ? AND user_id = ?)`
+    result, err := db.Exec(query, categoryID, name, color, isHidden, categoryID, userID)
     if err != nil {
         return 0, err
     }
@@ -64,7 +64,7 @@ func CreateTag(db *sql.DB, userID int64, categoryID int64, name string, color st
 
 // GetAllTagsByUserID retrieves all tags belonging to a user
 func GetAllTagsByUserID(db *sql.DB, userID int64) ([]models.Tag, error) {
-	query := `SELECT t.id, t.category_id, t.name, t.color, t.created_at 
+	query := `SELECT t.id, t.category_id, t.name, t.color, t.is_hidden, t.created_at 
               FROM tags t 
               JOIN categories c ON t.category_id = c.id 
               WHERE c.user_id = ?`
@@ -77,7 +77,7 @@ func GetAllTagsByUserID(db *sql.DB, userID int64) ([]models.Tag, error) {
 	var tags []models.Tag
 	for rows.Next() {
 		var t models.Tag
-		if err := rows.Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.CreatedAt); err != nil {
+		if err := rows.Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.IsHidden, &t.CreatedAt); err != nil {
 			return nil, err
 		}
 		tags = append(tags, t)
@@ -111,10 +111,10 @@ func DeleteTag(db *sql.DB, userID int64, tagID int64) error {
 	return err
 }
 
-// UpdateTag updates a tag name and color, verifying ownership
-func UpdateTag(db *sql.DB, userID int64, tagID int64, name string, color string) error {
-	query := `UPDATE tags SET name = ?, color = ? WHERE id = ? AND category_id IN (SELECT id FROM categories WHERE user_id = ?)`
-	_, err := db.Exec(query, name, color, tagID, userID)
+// UpdateTag updates a tag name, color, and hidden flag, verifying ownership
+func UpdateTag(db *sql.DB, userID int64, tagID int64, name string, color string, isHidden bool) error {
+	query := `UPDATE tags SET name = ?, color = ?, is_hidden = ? WHERE id = ? AND category_id IN (SELECT id FROM categories WHERE user_id = ?)`
+	_, err := db.Exec(query, name, color, isHidden, tagID, userID)
 	return err
 }
 

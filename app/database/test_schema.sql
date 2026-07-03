@@ -182,6 +182,7 @@ CREATE TABLE tags (
     category_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     color TEXT NOT NULL DEFAULT 'blue',
+    is_hidden INTEGER NOT NULL DEFAULT 0, -- when 1, tagged transactions are excluded from income/spending totals
     created_at INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     UNIQUE(category_id, name)

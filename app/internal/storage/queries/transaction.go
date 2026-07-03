@@ -60,13 +60,17 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 
 	// Filter by Category
 	if f.CategoryID != nil {
-		where += ` AND t.id IN (
-			SELECT tt.transaction_id 
-			FROM transaction_tags tt 
-			JOIN tags tg ON tt.tag_id = tg.id 
-			WHERE tg.category_id = ?
-		)`
-		args = append(args, *f.CategoryID)
+		if *f.CategoryID == 0 {
+			where += ` AND t.id NOT IN (SELECT transaction_id FROM transaction_tags)`
+		} else {
+			where += ` AND t.id IN (
+				SELECT tt.transaction_id 
+				FROM transaction_tags tt 
+				JOIN tags tg ON tt.tag_id = tg.id 
+				WHERE tg.category_id = ?
+			)`
+			args = append(args, *f.CategoryID)
+		}
 	}
 
 	// For tag filtering, we need a subquery or join
@@ -166,7 +170,7 @@ func DeleteTransactionByPlaidID(db *sql.DB, plaidTransactionID string) error {
 
 // GetTransactionTags retrieves tags for a specific transaction
 func GetTransactionTags(db *sql.DB, transactionID int64) ([]models.Tag, error) {
-	query := `SELECT tg.id, tg.category_id, tg.name, tg.color, tg.created_at 
+	query := `SELECT tg.id, tg.category_id, tg.name, tg.color, tg.is_hidden, tg.created_at 
               FROM tags tg 
               JOIN transaction_tags tt ON tg.id = tt.tag_id 
               WHERE tt.transaction_id = ?`
@@ -179,7 +183,7 @@ func GetTransactionTags(db *sql.DB, transactionID int64) ([]models.Tag, error) {
 	var tags []models.Tag
 	for rows.Next() {
 		var t models.Tag
-		if err := rows.Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.CreatedAt); err != nil {
+		if err := rows.Scan(&t.ID, &t.CategoryID, &t.Name, &t.Color, &t.IsHidden, &t.CreatedAt); err != nil {
 			return nil, err
 		}
 		tags = append(tags, t)

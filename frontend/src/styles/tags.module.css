@@ -324,6 +324,28 @@
   flex-shrink: 0;
 }
 
+/* Tags flagged as hidden exclude their transactions from income/spending
+   totals; render them muted with a struck-through label so the intent reads at
+   a glance in the category grid. */
+.tagChipHidden {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--tag-color) 8%, var(--surface));
+}
+
+.tagChipHidden .tagNameBtn {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--text-muted);
+}
+
+.tagHiddenIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
 .tagNameBtn {
   display: inline-flex;
   align-items: center;
@@ -483,6 +505,96 @@
 
 .colorSwatchSelected {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+}
+
+/* ── Hide-from-totals toggle ───────────────────────────────── */
+.hideToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.hideToggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.hideToggle[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+}
+
+.hideToggleIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex-shrink: 0;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+}
+
+.hideToggle[aria-checked="true"] .hideToggleIcon {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.hideToggleText {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.hideToggleTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hideToggleHint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.switchTrack {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  transition: background 0.2s ease;
+}
+
+.switchTrackOn {
+  background: var(--accent);
+}
+
+.switchThumb {
+  position: absolute;
+  top: 0.18rem;
+  left: 0.18rem;
+  width: 1.14rem;
+  height: 1.14rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.switchTrackOn .switchThumb {
+  transform: translateX(1.1rem);
 }
 
 .filterList {

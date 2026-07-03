@@ -78,7 +78,7 @@ func (s *TaggingService) DeleteCategory(userID, categoryID int64, action string,
 }
 
 // CreateTag handles duplicate checks, regex validation, and persistence for a new tag
-func (s *TaggingService) CreateTag(userID int64, categoryID int64, name, color string, filterPatterns, filterTypes []string, applyToPast bool) error {
+func (s *TaggingService) CreateTag(userID int64, categoryID int64, name, color string, isHidden bool, filterPatterns, filterTypes []string, applyToPast bool) error {
 	if name == "" || categoryID == 0 {
 		return errors.New("name and category are required")
 	}
@@ -94,7 +94,7 @@ func (s *TaggingService) CreateTag(userID int64, categoryID int64, name, color s
 		return errors.New("a tag with this name already exists")
 	}
 
-	tagID, err := s.store.CreateTag(userID, categoryID, name, color)
+	tagID, err := s.store.CreateTag(userID, categoryID, name, color, isHidden)
 	if err != nil {
 		return fmt.Errorf("failed to create tag: %w", err)
 	}
@@ -120,7 +120,7 @@ func (s *TaggingService) CreateTag(userID int64, categoryID int64, name, color s
 }
 
 // UpdateTag updates tag properties and its filters
-func (s *TaggingService) UpdateTag(userID, tagID int64, name, color string, categoryID *int64, filterPatterns, filterTypes []string, applyToPast bool) error {
+func (s *TaggingService) UpdateTag(userID, tagID int64, name, color string, isHidden bool, categoryID *int64, filterPatterns, filterTypes []string, applyToPast bool) error {
 	if name == "" {
 		return errors.New("tag name is required")
 	}
@@ -136,7 +136,7 @@ func (s *TaggingService) UpdateTag(userID, tagID int64, name, color string, cate
 
 	color = utils.NormalizeTagColor(color)
 
-	if err := s.store.UpdateTag(userID, tagID, name, color); err != nil {
+	if err := s.store.UpdateTag(userID, tagID, name, color, isHidden); err != nil {
 		return fmt.Errorf("failed to update tag: %w", err)
 	}
 
@@ -226,6 +226,7 @@ type DefaultTag struct {
 	Name    string
 	Pattern string
 	Color   string
+	Hidden  bool // excluded from income/spending totals (e.g. internal transfers)
 }
 
 // DefaultCategories and their associated tags with default filter patterns
@@ -253,7 +254,7 @@ var DefaultCategories = map[string][]DefaultTag{
 	"Financial": {
 		{Name: "Income", Pattern: "INCOME", Color: "teal"},
 		{Name: "Fees", Pattern: "BANK_FEES", Color: "red"},
-		{Name: "Transfers", Pattern: "TRANSFER", Color: "slate"},
+		{Name: "Transfers", Pattern: "TRANSFER", Color: "slate", Hidden: true},
 	},
 	"Leisure": {
 		{Name: "Entertainment", Pattern: "ENTERTAINMENT", Color: "violet"},
@@ -278,7 +279,7 @@ func (s *TaggingService) SeedDefaults(userID int64) error {
 		}
 
 		for _, dt := range defaultTags {
-			tagID, err := s.store.CreateTag(userID, catID, dt.Name, dt.Color)
+			tagID, err := s.store.CreateTag(userID, catID, dt.Name, dt.Color, dt.Hidden)
 			if err == nil {
 				s.store.CreateTagFilter(userID, tagID, dt.Pattern, "string")
 			}

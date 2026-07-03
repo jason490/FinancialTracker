@@ -410,6 +410,7 @@
 .tagChip {
   display: inline-flex;
   align-items: center;
+  gap: 0.2rem;
   padding: 0.12rem 0.45rem;
   border-radius: 999px;
   font-size: 0.72rem;
@@ -417,6 +418,16 @@
   color: var(--text);
   background: color-mix(in srgb, var(--tag-color) 18%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--tag-color) 35%, var(--border));
+}
+
+/* Tags excluded from totals render muted so the dashboard makes clear why the
+   transaction is not reflected in income/spending figures. */
+.tagChipHidden {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--text-muted) 30%, var(--border));
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
 .chartWrap {

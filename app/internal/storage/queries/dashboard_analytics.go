@@ -17,6 +17,15 @@ func analyticsAccountFilter(alias string) string {
 	return alias + ".user_id = ? AND " + alias + ".is_hidden = 0"
 }
 
+// hiddenTagExclusion drops transactions that carry a tag flagged as hidden so
+// that offsetting/redundant movements (e.g. credit-card payments, internal
+// transfers) never inflate income or spending totals.
+const hiddenTagExclusion = ` AND t.id NOT IN (
+			SELECT tt.transaction_id FROM transaction_tags tt
+			JOIN tags tg ON tt.tag_id = tg.id
+			WHERE tg.is_hidden = 1
+		)`
+
 // GetMonthlySpending returns positive outflows grouped by month for the last N months.
 func GetMonthlySpending(db *sql.DB, userID int64, provider string, months int) ([]models.MonthlySpend, error) {
 	if months < 1 {
@@ -32,7 +41,7 @@ func GetMonthlySpending(db *sql.DB, userID int64, provider string, months int) (
 		WHERE ` + analyticsAccountFilter(accountAlias) + `
 		  AND t.provider = ?
 		  AND t.amount > 0
-		  AND t.date >= ?
+		  AND t.date >= ?` + hiddenTagExclusion + `
 		GROUP BY month_key
 		ORDER BY month_key ASC`
 
@@ -66,7 +75,7 @@ func GetMonthCashflow(db *sql.DB, userID int64, provider string, monthStart, mon
 		WHERE ` + accountFilter + `
 		  AND t.provider = ?
 		  AND t.amount > 0
-		  AND t.date >= ? AND t.date < ?`
+		  AND t.date >= ? AND t.date < ?` + hiddenTagExclusion
 	if err := db.QueryRow(spendQuery, userID, provider, monthStart, monthEnd).Scan(&cf.Spend); err != nil {
 		return cf, err
 	}
@@ -77,7 +86,7 @@ func GetMonthCashflow(db *sql.DB, userID int64, provider string, monthStart, mon
 		WHERE ` + accountFilter + `
 		  AND t.provider = ?
 		  AND t.amount < 0
-		  AND t.date >= ? AND t.date < ?`
+		  AND t.date >= ? AND t.date < ?` + hiddenTagExclusion
 	if err := db.QueryRow(incomeQuery, userID, provider, monthStart, monthEnd).Scan(&cf.Income); err != nil {
 		return cf, err
 	}
@@ -121,7 +130,7 @@ func getTaggedBreakdown(db *sql.DB, userID int64, provider string, monthStart, m
 		  AND t.provider = ?
 		  AND c.user_id = ?
 		  AND ` + amountFilter + `
-		  AND t.date >= ? AND t.date < ?
+		  AND t.date >= ? AND t.date < ?` + hiddenTagExclusion + `
 		GROUP BY tg.id, tg.name, tg.color
 		HAVING total > 0.001
 		ORDER BY total DESC`
@@ -154,7 +163,7 @@ func getTaggedBreakdown(db *sql.DB, userID int64, provider string, monthStart, m
 		  AND t.provider = ?
 		  AND ` + amountFilter + `
 		  AND t.date >= ? AND t.date < ?
-		  AND tt.transaction_id IS NULL`
+		  AND tt.transaction_id IS NULL` + hiddenTagExclusion
 
 	var untagged float64
 	if err := db.QueryRow(untaggedQuery, userID, provider, monthStart, monthEnd).Scan(&untagged); err != nil {

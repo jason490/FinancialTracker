@@ -106,6 +106,7 @@ export type CreateTagRequest = {
   category_id: number;
   name: string;
   color: string;
+  is_hidden: boolean;
   filters: TagFilterInput[];
   apply: boolean;
 };
@@ -114,6 +115,7 @@ export type UpdateTagRequest = {
   name: string;
   color: string;
   category_id: number;
+  is_hidden: boolean;
   filters: TagFilterInput[];
   apply: boolean;
 };
@@ -165,6 +167,7 @@ export type DashboardAccountView = {
 export type DashboardTagView = {
   name: string;
   color: string;
+  is_hidden: boolean;
 };
 
 export type DashboardTransactionView = {
@@ -200,6 +203,7 @@ export type TransactionTagView = {
   id: number;
   name: string;
   color: string;
+  is_hidden: boolean;
 };
 
 export type TransactionView = {
@@ -222,6 +226,7 @@ export type TransactionTagOption = {
   name: string;
   color: string;
   category_id: number;
+  is_hidden: boolean;
 };
 
 export type TransactionListPayload = {
@@ -239,6 +244,7 @@ export type TagView = {
   category_id: number;
   name: string;
   color: string;
+  is_hidden: boolean;
 };
 
 export type CategoryWithTagsView = {

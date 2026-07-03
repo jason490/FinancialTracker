@@ -138,7 +138,7 @@ The SQLite schema (`app/database/schema.sql`) includes tables for:
 *   `tag_filters`: User-defined rules for auto-tagging.
 *   `sessions`: Authentication session management.
 
-Schema changes go only into `schema.sql` and `test_schema.sql` (no migration scripts).
+Schema changes go into `schema.sql` (production fresh installs) and `test_schema.sql` (development full recreate). For changes affecting already-deployed databases, also add an ordered delta under `app/database/migrations/` (zero-padded prefix, e.g. `0002_*.sql`); the startup migration runner (`app/internal/storage/migrate.go`) applies pending files in production and baselines them on fresh installs.
 
 ## General Instructions
 - Ensure each function has a comment on what it does

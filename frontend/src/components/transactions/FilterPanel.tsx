@@ -70,6 +70,7 @@ export function FilterPanel(props: FilterPanelProps) {
               }}
             >
               <option value="">All categories</option>
+              <option value="0">Uncategorized</option>
               <For each={props.metadata?.categories ?? []}>
                 {(cat) => <option value={cat.id}>{cat.name}</option>}
               </For>

@@ -1,4 +1,5 @@
 import { createEffect, createSignal, Show } from "solid-js";
+import { EyeOffIcon } from "~/components/icons";
 import FilterEditor from "~/components/tags/FilterEditor";
 import Modal from "~/components/tags/Modal";
 import TagColorPicker from "~/components/tags/TagColorPicker";
@@ -25,6 +26,7 @@ export default function TagFormModal(props: TagFormModalProps) {
   const [name, setName] = createSignal("");
   const [color, setColor] = createSignal(defaultTagColor());
   const [categoryId, setCategoryId] = createSignal(0);
+  const [isHidden, setIsHidden] = createSignal(false);
   const [filters, setFilters] = createSignal<TagFilterView[]>([]);
   const [loadingFilters, setLoadingFilters] = createSignal(false);
   const [pending, setPending] = createSignal(false);
@@ -51,6 +53,7 @@ export default function TagFormModal(props: TagFormModalProps) {
       setName("");
       setColor(defaultTagColor());
       setCategoryId(state.category?.id ?? props.categories[0]?.id ?? 0);
+      setIsHidden(false);
       return;
     }
 
@@ -58,6 +61,7 @@ export default function TagFormModal(props: TagFormModalProps) {
     setName(tag.name);
     setColor(tag.color || defaultTagColor());
     setCategoryId(tag.category_id);
+    setIsHidden(tag.is_hidden);
     setLoadingFilters(true);
     void getTagFilters(tag.id)
       .then(setFilters)
@@ -76,6 +80,7 @@ export default function TagFormModal(props: TagFormModalProps) {
         name: name().trim(),
         color: color(),
         category_id: categoryId(),
+        is_hidden: isHidden(),
         filters: filters().filter((f) => f.pattern.trim() !== ""),
         apply,
       };
@@ -139,6 +144,31 @@ export default function TagFormModal(props: TagFormModalProps) {
         </div>
 
         <TagColorPicker value={color()} onChange={setColor} />
+
+        <button
+          type="button"
+          class={styles.hideToggle}
+          role="switch"
+          aria-checked={isHidden()}
+          onClick={() => setIsHidden((v) => !v)}
+        >
+          <span class={styles.hideToggleIcon} aria-hidden="true">
+            <EyeOffIcon size={18} />
+          </span>
+          <span class={styles.hideToggleText}>
+            <span class={styles.hideToggleTitle}>Exclude from totals</span>
+            <span class={styles.hideToggleHint}>
+              Hide tagged transactions from monthly income &amp; spending — ideal for card payments
+              and internal transfers.
+            </span>
+          </span>
+          <span
+            classList={{ [styles.switchTrack]: true, [styles.switchTrackOn]: isHidden() }}
+            aria-hidden="true"
+          >
+            <span class={styles.switchThumb} />
+          </span>
+        </button>
 
         <Show
           when={!loadingFilters()}

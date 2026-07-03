@@ -67,7 +67,7 @@ func (h *TagHandler) HandleCreateTag(c *echo.Context) error {
 	}
 
 	patterns, types := tagFiltersFromInput(req.Filters)
-	if err := h.tagService.CreateTag(userID, req.CategoryID, req.Name, req.Color, patterns, types, req.Apply); err != nil {
+	if err := h.tagService.CreateTag(userID, req.CategoryID, req.Name, req.Color, req.IsHidden, patterns, types, req.Apply); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", err.Error()))
 	}
 
@@ -97,7 +97,7 @@ func (h *TagHandler) HandleUpdateTag(c *echo.Context) error {
 		categoryID = &req.CategoryID
 	}
 
-	if err := h.tagService.UpdateTag(userID, tagID, req.Name, req.Color, categoryID, patterns, types, req.Apply); err != nil {
+	if err := h.tagService.UpdateTag(userID, tagID, req.Name, req.Color, req.IsHidden, categoryID, patterns, types, req.Apply); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse("validation_error", err.Error()))
 	}
 

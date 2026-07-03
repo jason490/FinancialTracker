@@ -549,6 +549,43 @@
   margin-top: 0.2rem;
 }
 
+/* Transactions carrying a hidden tag are excluded from monthly totals. They
+   stay visible in the ledger but are visually dimmed so it is obvious they do
+   not contribute to income/spending figures. */
+.transactionCardExcluded {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-style: dashed;
+}
+
+.transactionCardExcluded .transactionName,
+.transactionCardExcluded .transactionAmount {
+  opacity: 0.62;
+}
+
+.tagChipHidden {
+  gap: 0.2rem;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--text-muted) 30%, var(--border));
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.excludedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--text-muted) 14%, transparent);
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
 /* ── Bulk Action Bar ───────────────────────────────────────── */
 .bulkBar {
   position: sticky;

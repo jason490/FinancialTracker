@@ -13,9 +13,10 @@ func BuildListPayload(data *models.TransactionPageData) *external.TransactionLis
 		tagViews := make([]external.TransactionTagView, 0, len(t.Tags))
 		for j := range t.Tags {
 			tagViews = append(tagViews, external.TransactionTagView{
-				ID:    t.Tags[j].ID,
-				Name:  t.Tags[j].Name,
-				Color: t.Tags[j].Color,
+				ID:       t.Tags[j].ID,
+				Name:     t.Tags[j].Name,
+				Color:    t.Tags[j].Color,
+				IsHidden: t.Tags[j].IsHidden,
 			})
 		}
 		txViews = append(txViews, external.TransactionView{
@@ -36,6 +37,7 @@ func BuildListPayload(data *models.TransactionPageData) *external.TransactionLis
 			Name:       data.AllTags[i].Name,
 			Color:      data.AllTags[i].Color,
 			CategoryID: data.AllTags[i].CategoryID,
+			IsHidden:   data.AllTags[i].IsHidden,
 		})
 	}
 

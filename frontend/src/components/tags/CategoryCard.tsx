@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import { CheckIcon, PlusIcon, TrashIcon, XIcon } from "~/components/icons";
+import { CheckIcon, EyeOffIcon, PlusIcon, TrashIcon, XIcon } from "~/components/icons";
 import { tagColorHex } from "~/lib/tag-colors";
 import { deleteTag, updateCategory } from "~/lib/tags";
 import type { CategoryWithTagsView, TagView } from "~/lib/types";
@@ -156,12 +156,21 @@ export default function CategoryCard(props: CategoryCardProps) {
                 classList={{
                   [styles.tagChip]: true,
                   [styles.tagChipDragging]: props.draggingTag?.id === tag.id,
+                  [styles.tagChipHidden]: tag.is_hidden,
                 }}
                 style={{ "--tag-color": tagColorHex(tag.color) }}
-                title="Drag to another category to move this tag"
+                title={
+                  tag.is_hidden
+                    ? "Excluded from income & spending totals"
+                    : "Drag to another category to move this tag"
+                }
                 onPointerDown={(event) => props.onTagPointerDown(tag, event)}
               >
-                <span class={styles.tagDot} />
+                <Show when={tag.is_hidden} fallback={<span class={styles.tagDot} />}>
+                  <span class={styles.tagHiddenIcon} aria-label="Excluded from totals">
+                    <EyeOffIcon size={13} />
+                  </span>
+                </Show>
                 <button
                   type="button"
                   class={styles.tagNameBtn}

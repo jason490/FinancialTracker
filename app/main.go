@@ -83,9 +83,27 @@ func openDatabase(path string) (*sql.DB, *storage.Storage, error) {
 		return nil, nil, fmt.Errorf("open database: %w", err)
 	}
 
+	// Detect whether this is a brand-new database before schema.sql creates the
+	// core tables. A fresh install already gets every column from schema.sql, so
+	// migrations are baselined rather than re-run against it.
+	usersExisted, err := storage.TableExists(db, "users")
+	if err != nil {
+		db.Close()
+		return nil, nil, fmt.Errorf("inspect database: %w", err)
+	}
+
 	if _, err := db.Exec(string(schemaFile)); err != nil {
 		db.Close()
 		return nil, nil, fmt.Errorf("apply schema: %w", err)
+	}
+
+	// Development rebuilds the full schema from test_schema.sql on every start,
+	// so incremental migrations only apply to persistent (production) databases.
+	if !config.IsDevelopment() {
+		if err := storage.RunMigrations(db, "./database/migrations", !usersExisted); err != nil {
+			db.Close()
+			return nil, nil, fmt.Errorf("apply migrations: %w", err)
+		}
 	}
 
 	return db, storage.NewSqliteStorage(db), nil

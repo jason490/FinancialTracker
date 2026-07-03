@@ -18,6 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /main /app/main
 COPY database/schema.sql /app/database/schema.sql
+COPY database/migrations /app/database/migrations
 
 ENV PORT=8080
 ENV DATABASE_PATH=/data/main.db

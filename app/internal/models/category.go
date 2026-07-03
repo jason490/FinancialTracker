@@ -14,6 +14,7 @@ type Tag struct {
 	CategoryID int64  `json:"category_id"`
 	Name       string `json:"name"`
 	Color      string `json:"color"`
+	IsHidden   bool   `json:"is_hidden"`
 	CreatedAt  int64  `json:"created_at"`
 }
 

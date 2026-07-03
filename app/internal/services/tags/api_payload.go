@@ -17,6 +17,7 @@ func BuildTagsPayload(data []models.CategoryWithTags) *external.TagsPayload {
 				CategoryID: cwt.Tags[j].CategoryID,
 				Name:       cwt.Tags[j].Name,
 				Color:      cwt.Tags[j].Color,
+				IsHidden:   cwt.Tags[j].IsHidden,
 			})
 		}
 		cats = append(cats, external.CategoryWithTagsView{

@@ -35,8 +35,9 @@ type DashboardAccountView struct {
 
 // DashboardTagView is a minimal tag label for transaction rows.
 type DashboardTagView struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	Name     string `json:"name"`
+	Color    string `json:"color"`
+	IsHidden bool   `json:"is_hidden"`
 }
 
 // DashboardTransactionView is a sanitized transaction row for dashboard widgets.
@@ -74,9 +75,10 @@ type DashboardPayload struct {
 
 // TransactionTagView is a tag attached to a transaction row, with id exposed for bulk operations.
 type TransactionTagView struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Color    string `json:"color"`
+	IsHidden bool   `json:"is_hidden"`
 }
 
 // TransactionView is a sanitized transaction for the frontend, stripping Plaid internals.
@@ -102,6 +104,7 @@ type TransactionTagOption struct {
 	Name       string `json:"name"`
 	Color      string `json:"color"`
 	CategoryID int64  `json:"category_id"`
+	IsHidden   bool   `json:"is_hidden"`
 }
 
 // TransactionListPayload is the full paginated transaction list response.
@@ -121,6 +124,7 @@ type TagView struct {
 	CategoryID int64  `json:"category_id"`
 	Name       string `json:"name"`
 	Color      string `json:"color"`
+	IsHidden   bool   `json:"is_hidden"`
 }
 
 // CategoryWithTagsView is a category and its tags for the tags management page.

@@ -61,6 +61,7 @@ type CreateTagRequest struct {
 	CategoryID int64            `json:"category_id"`
 	Name       string           `json:"name"`
 	Color      string           `json:"color"`
+	IsHidden   bool             `json:"is_hidden"`
 	Filters    []TagFilterInput `json:"filters"`
 	Apply      bool             `json:"apply"`
 }
@@ -70,6 +71,7 @@ type UpdateTagRequest struct {
 	Name       string           `json:"name"`
 	Color      string           `json:"color"`
 	CategoryID int64            `json:"category_id"`
+	IsHidden   bool             `json:"is_hidden"`
 	Filters    []TagFilterInput `json:"filters"`
 	Apply      bool             `json:"apply"`
 }

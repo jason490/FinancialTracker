@@ -268,9 +268,9 @@ func (s *Storage) DeleteTag(userID int64, tagID int64) error {
 	return queries.DeleteTag(s.db, userID, tagID)
 }
 
-// UpdateTag updates a tag name and color
-func (s *Storage) UpdateTag(userID int64, tagID int64, name string, color string) error {
-	return queries.UpdateTag(s.db, userID, tagID, name, color)
+// UpdateTag updates a tag name, color, and hidden flag
+func (s *Storage) UpdateTag(userID int64, tagID int64, name string, color string, isHidden bool) error {
+	return queries.UpdateTag(s.db, userID, tagID, name, color, isHidden)
 }
 
 // ApplyTagFiltersToPastTransactions applies all filters of a tag to a user's transactions
@@ -283,8 +283,8 @@ func (s *Storage) CreateCategory(userID int64, name string) (int64, error) {
 }
 
 // CreateTag creates a new tag under a category
-func (s *Storage) CreateTag(userID int64, categoryID int64, name string, color string) (int64, error) {
-	return queries.CreateTag(s.db, userID, categoryID, name, color)
+func (s *Storage) CreateTag(userID int64, categoryID int64, name string, color string, isHidden bool) (int64, error) {
+	return queries.CreateTag(s.db, userID, categoryID, name, color, isHidden)
 }
 
 // CreateTagFilter creates a new auto-tagging rule

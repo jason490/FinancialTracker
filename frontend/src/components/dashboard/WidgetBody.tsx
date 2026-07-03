@@ -1,7 +1,7 @@
 import type { ApexOptions } from "apexcharts";
 import { For, Show, createSignal } from "solid-js";
 import ApexChart from "~/components/dashboard/ApexChart";
-import { SyncIcon } from "~/components/icons";
+import { EyeOffIcon, SyncIcon } from "~/components/icons";
 import { syncAllConnections } from "~/lib/connections";
 import { reportSyncError } from "~/lib/api-error";
 import {
@@ -437,8 +437,12 @@ export default function WidgetBody(props: WidgetBodyProps) {
                             {(tag) => (
                               <span
                                 class={styles.tagChip}
+                                classList={{ [styles.tagChipHidden]: tag.is_hidden }}
                                 style={{ "--tag-color": tagColorHex(tag.color) || readCssVar("--accent") }}
                               >
+                                <Show when={tag.is_hidden}>
+                                  <EyeOffIcon size={10} />
+                                </Show>
                                 {tag.name}
                               </span>
                             )}
