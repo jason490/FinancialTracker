@@ -64,10 +64,10 @@ def test_dashboard_net_worth_widget(auth_page: Page, base_url: str):
     expect(auth_page.get_by_role("heading", name="Net Worth")).to_be_visible()
 
 def test_dashboard_spending_trend_widget(auth_page: Page, base_url: str):
-    """Test that the Spending Trend widget is present."""
+    """Test that the Monthly Cashflow widget is present."""
     auth_page.goto(f"{base_url}/dashboard")
 
-    expect(auth_page.get_by_role("heading", name="Spending Trend")).to_be_visible()
+    expect(auth_page.get_by_role("heading", name="Monthly Cashflow")).to_be_visible()
 
 def test_dashboard_income_by_tag_widget(auth_page: Page, base_url: str):
     """Test that the Income by Tag widget is present."""

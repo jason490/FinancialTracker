@@ -117,6 +117,7 @@ export default function TransactionsPage() {
           setDebouncedMinAmount(min);
           setDebouncedMaxAmount(max);
           setPage(1);
+          setSelected(new Set());
         });
       });
     }, DEBOUNCE_MS);
@@ -172,6 +173,7 @@ export default function TransactionsPage() {
       batch(() => {
         fn();
         setPage(1);
+        setSelected(new Set());
       });
     });
   };

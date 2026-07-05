@@ -1,6 +1,8 @@
 {
     admin off
     email {$ACME_EMAIL}
+    http_port 8080
+    https_port 8443
 }
 
 # SITE_HOST should be a bare hostname (e.g. yourdomain.com). Caddy provisions TLS

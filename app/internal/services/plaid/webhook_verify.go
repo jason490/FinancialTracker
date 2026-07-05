@@ -105,7 +105,7 @@ func (p *PlaidService) getWebhookVerificationKey(ctx context.Context, keyID stri
 		p.webhookKeyCache.mu.RUnlock()
 		return key, nil
 	}
-	p.webhookKeyCache.mu.Unlock()
+	p.webhookKeyCache.mu.RUnlock()
 
 	request := plaid.NewWebhookVerificationKeyGetRequest(keyID)
 	resp, _, err := p.client.PlaidApi.WebhookVerificationKeyGet(ctx).WebhookVerificationKeyGetRequest(*request).Execute()

@@ -345,8 +345,8 @@ export default function WidgetBody(props: WidgetBodyProps) {
         <article class={styles.widget}>
           <header class={styles.widgetHeader}>
             <div>
-              <h2 class={styles.widgetTitle}>Spending Trend</h2>
-              <p class={styles.widgetSubtitle}>Monthly outflows over the last six months</p>
+              <h2 class={styles.widgetTitle}>Monthly Cashflow</h2>
+              <p class={styles.widgetSubtitle}>Income and spending over the last six months</p>
             </div>
           </header>
 
@@ -372,14 +372,35 @@ export default function WidgetBody(props: WidgetBodyProps) {
               height={260}
               series={[
                 {
+                  name: "Income",
+                  data: spendingTrend().map((point) => point.income),
+                },
+                {
                   name: "Spend",
                   data: spendingTrend().map((point) => point.total),
                 },
               ]}
               options={{
                 ...chartBaseOptions(),
-                chart: { ...chartBaseOptions().chart, type: "bar" },
-                colors: [readCssVar("--accent")],
+                chart: { ...chartBaseOptions().chart, type: "area" },
+                colors: ["#10b981", "#f59e0b"],
+                stroke: { curve: "smooth", width: 2.5 },
+                fill: {
+                  type: "gradient",
+                  gradient: {
+                    shadeIntensity: 0.85,
+                    opacityFrom: 0.42,
+                    opacityTo: 0.04,
+                    stops: [0, 88, 100],
+                  },
+                },
+                legend: {
+                  show: true,
+                  position: "top",
+                  horizontalAlign: "right",
+                  labels: { colors: readCssVar("--text-muted") },
+                  markers: { size: 5 },
+                },
                 xaxis: {
                   categories: spendingTrend().map((point) => formatMonthLabel(point.month)),
                   labels: { style: { colors: readCssVar("--text-muted") } },
@@ -390,12 +411,6 @@ export default function WidgetBody(props: WidgetBodyProps) {
                   labels: {
                     style: { colors: readCssVar("--text-muted") },
                     formatter: (value) => formatCurrency(value),
-                  },
-                },
-                plotOptions: {
-                  bar: {
-                    borderRadius: 4,
-                    columnWidth: "60%",
                   },
                 },
               }}

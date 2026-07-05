@@ -26,7 +26,7 @@ const hiddenTagExclusion = ` AND t.id NOT IN (
 			WHERE tg.is_hidden = 1
 		)`
 
-// GetMonthlySpending returns positive outflows grouped by month for the last N months.
+// GetMonthlySpending returns monthly income and spending grouped by month for the last N months.
 func GetMonthlySpending(db *sql.DB, userID int64, provider string, months int) ([]models.MonthlySpend, error) {
 	if months < 1 {
 		months = 6
@@ -35,14 +35,15 @@ func GetMonthlySpending(db *sql.DB, userID int64, provider string, months int) (
 	accountTable, accountAlias := analyticsAccountJoin(provider)
 	query := `
 		SELECT strftime('%Y-%m', t.date, 'unixepoch') AS month_key,
-		       SUM(t.amount) AS total
+		       COALESCE(SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END), 0) AS total,
+		       COALESCE(SUM(CASE WHEN t.amount < 0 THEN -t.amount ELSE 0 END), 0) AS income
 		FROM transactions t
 		JOIN ` + accountTable + ` ` + accountAlias + ` ON t.plaid_id = ` + accountAlias + `.id
 		WHERE ` + analyticsAccountFilter(accountAlias) + `
 		  AND t.provider = ?
-		  AND t.amount > 0
 		  AND t.date >= ?` + hiddenTagExclusion + `
 		GROUP BY month_key
+		HAVING total > 0 OR income > 0
 		ORDER BY month_key ASC`
 
 	rows, err := db.Query(query, userID, provider, start)
@@ -54,7 +55,7 @@ func GetMonthlySpending(db *sql.DB, userID int64, provider string, months int) (
 	var result []models.MonthlySpend
 	for rows.Next() {
 		var m models.MonthlySpend
-		if err := rows.Scan(&m.Month, &m.Total); err != nil {
+		if err := rows.Scan(&m.Month, &m.Total, &m.Income); err != nil {
 			return nil, err
 		}
 		result = append(result, m)

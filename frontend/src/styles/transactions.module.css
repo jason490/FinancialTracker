@@ -408,7 +408,7 @@
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
   transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
-  cursor: default;
+  cursor: pointer;
 }
 
 .transactionCard:hover {

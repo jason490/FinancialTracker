@@ -12,13 +12,16 @@ RUN CGO_ENABLED=1 go build -ldflags="-s -w" -o /main main.go
 
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates sqlite-libs
+RUN apk add --no-cache ca-certificates sqlite-libs su-exec \
+    && addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
 COPY --from=builder /main /app/main
 COPY database/schema.sql /app/database/schema.sql
 COPY database/migrations /app/database/migrations
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 ENV PORT=8080
 ENV DATABASE_PATH=/data/main.db
@@ -26,4 +29,4 @@ ENV ENV=production
 
 EXPOSE 8080
 
-CMD ["/app/main"]
+ENTRYPOINT ["/app/entrypoint.sh"]

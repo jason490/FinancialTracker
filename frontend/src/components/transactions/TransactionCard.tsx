@@ -26,12 +26,14 @@ export function TransactionCard(props: TransactionCardProps) {
         [styles.transactionCardSelected]: props.selected,
         [styles.transactionCardExcluded]: isExcluded(),
       }}
+      onClick={() => props.onToggleSelect(props.transaction.id)}
     >
       <input
         type="checkbox"
         class={styles.checkbox}
         checked={props.selected}
         onChange={() => props.onToggleSelect(props.transaction.id)}
+        onClick={(e) => e.stopPropagation()}
       />
       <div class={styles.transactionInfo}>
         <p class={styles.transactionName}>

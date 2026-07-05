@@ -33,7 +33,7 @@ export const WIDGET_META: Record<string, WidgetMeta> = {
   [WIDGET_IDS.loanAccounts]: { label: "Loans", span: 1, minRows: 2, maxRows: 4 },
   [WIDGET_IDS.investmentAccounts]: { label: "Investments", span: 1, minRows: 2, maxRows: 4 },
   [WIDGET_IDS.quickActions]: { label: "Quick Actions", span: 1, minRows: 2, maxRows: 2 },
-  [WIDGET_IDS.spendingTrend]: { label: "Spending Trend", span: 2, minRows: 2, maxRows: 3 },
+  [WIDGET_IDS.spendingTrend]: { label: "Monthly Cashflow", span: 2, minRows: 2, maxRows: 3 },
   [WIDGET_IDS.recentTransactions]: { label: "Recent Transactions", span: 2, minRows: 2, maxRows: 4 },
 };
 

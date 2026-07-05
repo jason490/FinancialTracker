@@ -1,4 +1,4 @@
-import { Index, Show, Suspense, createSignal } from "solid-js";
+import { Index, Show, Suspense, createSignal, startTransition } from "solid-js";
 import { EyeIcon, EyeOffIcon, SyncIcon, TrashIcon } from "~/components/icons";
 import { formatCurrency, formatDate } from "~/lib/format";
 import {
@@ -60,7 +60,10 @@ export default function ConnectionsPanel(props: ConnectionsPanelProps) {
     setPendingAction(key);
     try {
       await action();
-      refetch();
+      // Refetch inside a transition so the Suspense boundary keeps the current
+      // content on screen and swaps atomically once fresh data arrives, instead
+      // of flashing the "Loading connections..." fallback on every action.
+      await startTransition(() => refetch());
       props.onMessage(message, "ok");
       setPendingAction(null);
     } catch (err) {

@@ -13,10 +13,11 @@ type DashboardLayout struct {
 	Mobile  []DashboardWidget `json:"mobile"`
 }
 
-// MonthlySpend is spending total for a calendar month (YYYY-MM).
+// MonthlySpend is income and spending totals for a calendar month (YYYY-MM).
 type MonthlySpend struct {
-	Month string  `json:"month"`
-	Total float64 `json:"total"`
+	Month  string  `json:"month"`
+	Total  float64 `json:"total"`
+	Income float64 `json:"income"`
 }
 
 // MonthCashflow is spend and income for a calendar month.

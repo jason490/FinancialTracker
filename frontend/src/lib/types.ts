@@ -344,6 +344,7 @@ export type DashboardLayout = {
 export type MonthlySpend = {
   month: string;
   total: number;
+  income: number;
 };
 
 export type MonthCashflow = {
