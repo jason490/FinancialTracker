@@ -90,7 +90,7 @@ func (p *PlaidService) verifyWebhook(ctx context.Context, body []byte, signedJWT
 	}
 
 	actualHash := sha256Hex(body)
-	if subtle.ConstantTimeCompare([]byte(expectedHash), []byte(actualHash)) != 0 {
+	if subtle.ConstantTimeCompare([]byte(expectedHash), []byte(actualHash)) != 1 {
 		return ErrWebhookVerification
 	}
 

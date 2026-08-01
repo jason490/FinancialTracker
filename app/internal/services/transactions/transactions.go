@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"FinancialTracker/internal/models"
+	"FinancialTracker/internal/models/external"
 	"FinancialTracker/internal/services/financial"
 	"FinancialTracker/internal/services/subscription"
 	"FinancialTracker/internal/storage"
@@ -63,6 +64,28 @@ func (s *TransactionService) GetTransactionsPage(userID int64, filters models.Tr
 		AllTags:      allTags,
 		Categories:   categories,
 	}, nil
+}
+
+// GetAnalytics returns filter-scoped cashflow totals, category donut data, and monthly trend.
+func (s *TransactionService) GetAnalytics(userID int64, filters models.TransactionFilters) (*external.TransactionAnalyticsPayload, error) {
+	provider := financial.ActiveProvider()
+
+	cashflow, err := s.store.GetFilteredCashflow(userID, provider, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load cashflow: %w", err)
+	}
+
+	byCategory, err := s.store.GetFilteredSpendingByCategory(userID, provider, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load category breakdown: %w", err)
+	}
+
+	trend, err := s.store.GetFilteredMonthlyTrend(userID, provider, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load spending trend: %w", err)
+	}
+
+	return BuildAnalyticsPayload(cashflow, trend, byCategory), nil
 }
 
 // BulkAddTag adds a tag to multiple transactions for a user

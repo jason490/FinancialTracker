@@ -5,6 +5,7 @@ You are Full-stack developer and designer. Ensure any interactions feel seemless
 
 ## 1. Project Overview
 
+*   **Documentation:** Operator and feature docs live in [`docs/`](docs/index.md). Write and update them in ASD-STE100 style. Record behavior changes in [`docs/operations/changelog.md`](docs/operations/changelog.md).
 *   **Core Purpose:** Automated expense tracking, smart tagging, and categorization.
 *   **Main Technologies:**
     *   **Backend:** Go (Golang) using the `echo` v5 framework as a pure REST API.
@@ -147,8 +148,10 @@ Schema changes go into `schema.sql` (production fresh installs) and `test_schema
 - Always reference the official documentation first
 - Always aim to reduce the number of client side refreshes
 - Do not use echo.Context and only use *echo.Context
-- Any changes made must be documented in `summary.md`
-- Do not delete anything from `summary.md` only update it with what you currently did and only if you changed that specific functionality.
+- Any behavior changes must be documented in `docs/operations/changelog.md`
+- Do not delete existing changelog entries. Only add or update the sections that match the change you made
+- Keep feature docs in `docs/features/` accurate when you change user-facing behavior
+- Follow ASD-STE100 style in `docs/` (active voice, short sentences, one topic per sentence, consistent terms)
 - Make sure to use proper status codes when encountering an error and that its properly managed by the frontend
 - Make sure to read other files to understand the design patterns
 - Only use comments when necessary

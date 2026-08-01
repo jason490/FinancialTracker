@@ -213,6 +213,170 @@
   line-height: 1;
 }
 
+/* ── Graphs panel ──────────────────────────────────────────── */
+.graphsPanel {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  animation: graphsIn 0.35s ease both;
+}
+
+@keyframes graphsIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.graphsLoading {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.graphsMetrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.graphsMetricTile {
+  --tile-tone: #f59e0b;
+  padding: 1rem 1.1rem;
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--tile-tone) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--tile-tone) 26%, var(--border));
+}
+
+.graphsMetricTile span {
+  display: block;
+  color: color-mix(in srgb, var(--tile-tone) 78%, var(--text-muted));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.graphsMetricTile strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 4vw, 1.9rem);
+  letter-spacing: -0.02em;
+}
+
+.graphsMetricSpend {
+  --tile-tone: #f59e0b;
+}
+
+.graphsMetricIncome {
+  --tile-tone: #10b981;
+}
+
+.graphsCharts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.graphsCard {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem 1.15rem;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.graphsCardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.graphsCardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.graphsCardSubtitle {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.graphsCardAside {
+  text-align: right;
+}
+
+.graphsCardAside span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.graphsCardAside strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1.05rem;
+}
+
+.graphsEmpty {
+  margin: 0;
+  padding: 2rem 0.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.graphsChartWrap {
+  min-height: 240px;
+  min-width: 0;
+}
+
+.graphsChartWrap :global(.apexcharts-datalabel-label) {
+  fill: var(--text-muted);
+}
+
+.graphsChartWrap :global(.apexcharts-datalabel-value) {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+.graphsChartWrap :global(.apexcharts-tooltip) {
+  background: var(--surface-elevated) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  border-radius: 0.75rem !important;
+}
+
+.graphsChartWrap :global(.apexcharts-tooltip-title) {
+  background: var(--bg-accent) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.graphsChartWrap :global(.apexcharts-tooltip-series-group) {
+  background: transparent !important;
+}
+
+.graphsChartWrap :global(.apexcharts-tooltip-text) {
+  color: var(--text) !important;
+}
+
 /* ── Filter Panel / Mobile Sheet ───────────────────────────── */
 .filterRoot {
   position: relative;
@@ -1112,6 +1276,10 @@
     display: inline;
   }
 
+  .graphsMetrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .transactionCard {
     padding: 0.95rem 1.15rem;
   }
@@ -1133,6 +1301,11 @@
 
   .filterPanelBody {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .graphsCharts {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
   }
 
   .transactionCard:hover {

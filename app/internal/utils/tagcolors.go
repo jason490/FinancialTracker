@@ -50,3 +50,14 @@ func NormalizeTagColor(key string) string {
 	}
 	return DefaultTagColor()
 }
+
+// PaletteColorForIndex returns a stable palette key for a numeric index (e.g. category id).
+func PaletteColorForIndex(index int) string {
+	if len(tagPalette) == 0 {
+		return DefaultTagColor()
+	}
+	if index < 0 {
+		index = -index
+	}
+	return tagPalette[index%len(tagPalette)].Key
+}

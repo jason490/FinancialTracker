@@ -60,6 +60,7 @@ func (s *Server) api() {
 
 	transactionHandler := handler.NewTransactionHandler(s.transService)
 	protected.GET("/transactions", transactionHandler.HandleGetTransactions)
+	protected.GET("/transactions/analytics", transactionHandler.HandleGetAnalytics)
 	protected.GET("/transactions/export", transactionHandler.HandleExportTransactions)
 	protected.POST("/transactions/bulk-add-tag", transactionHandler.HandleBulkAddTag)
 	protected.POST("/transactions/bulk-remove-tag", transactionHandler.HandleBulkRemoveTag)

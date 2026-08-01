@@ -89,6 +89,7 @@
 .gridSection {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .editBar {
@@ -120,15 +121,19 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .gridItem {
   position: relative;
   height: auto;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .gridItemReveal {
@@ -161,6 +166,8 @@
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .widgetHeader {

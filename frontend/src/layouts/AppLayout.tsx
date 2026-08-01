@@ -1,9 +1,8 @@
 import { A, useLocation, useNavigate } from "@solidjs/router";
 import { ParentProps, createEffect, Show } from "solid-js";
-import { DashboardIcon, SettingsIcon, TagsIcon, TransactionsIcon } from "~/components/icons";
+import { DashboardIcon, SettingsIcon, TransactionsIcon } from "~/components/icons";
 import AppLogo from "~/components/icons/AppLogo";
 import { useAuth } from "~/lib/auth-context";
-import { postAuthPath } from "~/lib/auth";
 import styles from "./AppLayout.module.css";
 
 export default function AppLayout(props: ParentProps) {
@@ -30,7 +29,6 @@ export default function AppLayout(props: ParentProps) {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: <DashboardIcon /> },
     { label: "Transactions", href: "/transactions", icon: <TransactionsIcon /> },
-    { label: "Tags", href: "/tags", icon: <TagsIcon /> },
     { label: "Settings", href: "/settings", icon: <SettingsIcon /> },
   ];
 

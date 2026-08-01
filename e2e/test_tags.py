@@ -1,33 +1,34 @@
 import pytest
 from playwright.sync_api import Page, expect
 
-def test_tags_page_loads(auth_page: Page, base_url: str):
-    """Test that the tags page loads with the correct heading."""
-    auth_page.goto(f"{base_url}/tags")
+def test_tags_panel_loads(auth_page: Page, base_url: str):
+    """Test that the settings Tags tab loads with the correct heading."""
+    auth_page.goto(f"{base_url}/settings?tab=tags")
 
     expect(auth_page.get_by_role("heading", name="Tags & Categories", exact=True)).to_be_visible()
 
-def test_tags_eyebrow(auth_page: Page, base_url: str):
-    """Test that the 'Organization' eyebrow text is displayed."""
+def test_tags_redirect(auth_page: Page, base_url: str):
+    """Test that /tags redirects to the settings Tags tab."""
     auth_page.goto(f"{base_url}/tags")
 
-    expect(auth_page.get_by_text("Organization")).to_be_visible()
+    expect(auth_page).to_have_url(f"{base_url}/settings?tab=tags")
+    expect(auth_page.get_by_role("heading", name="Tags & Categories", exact=True)).to_be_visible()
 
 def test_tags_subtitle(auth_page: Page, base_url: str):
-    """Test that the tags subtitle is present."""
-    auth_page.goto(f"{base_url}/tags")
+    """Test that the tags section hint is present."""
+    auth_page.goto(f"{base_url}/settings?tab=tags")
 
     expect(auth_page.get_by_text("Shape how transactions get labeled")).to_be_visible()
 
 def test_new_category_button(auth_page: Page, base_url: str):
     """Test that the 'New Category' button is present."""
-    auth_page.goto(f"{base_url}/tags")
+    auth_page.goto(f"{base_url}/settings?tab=tags")
 
     expect(auth_page.get_by_role("button", name="New Category")).to_be_visible()
 
 def test_add_tag_buttons_present(auth_page: Page, base_url: str):
     """Test that per-category 'Add tag' buttons are present."""
-    auth_page.goto(f"{base_url}/tags")
+    auth_page.goto(f"{base_url}/settings?tab=tags")
 
     # Each category has its own "Add tag to {category}" icon button
     add_buttons = auth_page.get_by_role("button", name="Add tag to")
@@ -35,7 +36,7 @@ def test_add_tag_buttons_present(auth_page: Page, base_url: str):
 
 def test_default_categories_present(auth_page: Page, base_url: str):
     """Test that default tag categories are rendered."""
-    auth_page.goto(f"{base_url}/tags")
+    auth_page.goto(f"{base_url}/settings?tab=tags")
 
     # These are the default seeded categories
     for name in ["Financial", "Food & Drink", "Recurring", "Shopping", "Transport"]:

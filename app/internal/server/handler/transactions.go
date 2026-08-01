@@ -43,6 +43,35 @@ func (h *TransactionHandler) HandleGetTransactions(c *echo.Context) error {
 		pageSize = 25
 	}
 
+	filters := parseTransactionFilters(c)
+
+	data, err := h.transService.GetTransactionsPage(userID, filters, page, pageSize)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrorResponse("transactions_error", "Failed to load transactions"))
+	}
+
+	return c.JSON(http.StatusOK, transactions.BuildListPayload(&data))
+}
+
+// HandleGetAnalytics returns filter-scoped cashflow, category donut, and monthly trend data.
+func (h *TransactionHandler) HandleGetAnalytics(c *echo.Context) error {
+	userID, err := requireUserID(c)
+	if err != nil {
+		return err
+	}
+
+	filters := parseTransactionFilters(c)
+	payload, err := h.transService.GetAnalytics(userID, filters)
+	if err != nil {
+		c.Logger().Error("transaction analytics failed", "user_id", userID, "error", err)
+		return c.JSON(http.StatusInternalServerError, ErrorResponse("analytics_error", "Failed to load transaction analytics"))
+	}
+
+	return c.JSON(http.StatusOK, payload)
+}
+
+// parseTransactionFilters reads shared list/analytics filter query params.
+func parseTransactionFilters(c *echo.Context) models.TransactionFilters {
 	filters := models.TransactionFilters{
 		Search:  c.QueryParam("search"),
 		SortBy:  c.QueryParam("sort_by"),
@@ -91,12 +120,7 @@ func (h *TransactionHandler) HandleGetTransactions(c *echo.Context) error {
 		}
 	}
 
-	data, err := h.transService.GetTransactionsPage(userID, filters, page, pageSize)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, ErrorResponse("transactions_error", "Failed to load transactions"))
-	}
-
-	return c.JSON(http.StatusOK, transactions.BuildListPayload(&data))
+	return filters
 }
 
 // HandleBulkAddTag adds a tag to multiple transactions at once

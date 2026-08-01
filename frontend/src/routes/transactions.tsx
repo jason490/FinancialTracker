@@ -16,7 +16,7 @@ import AppLayout from "~/layouts/AppLayout";
 import { SyncIcon } from "~/components/icons";
 import PageStatusBanner, { type PageStatus } from "~/components/PageStatusBanner";
 import { useAuth } from "~/lib/auth-context";
-import { getTransactions, bulkAddTag, bulkRemoveTag } from "~/lib/transactions";
+import { getTransactions, getTransactionAnalytics, bulkAddTag, bulkRemoveTag } from "~/lib/transactions";
 import { syncAllConnections } from "~/lib/connections";
 import { reportSyncError } from "~/lib/api-error";
 import { useMinLoadingHold } from "~/lib/loading-transition";
@@ -25,6 +25,7 @@ import { TransactionHeader } from "~/components/transactions/TransactionHeader";
 import { TransactionToolbar } from "~/components/transactions/TransactionToolbar";
 import { FilterPanel } from "~/components/transactions/FilterPanel";
 import { TransactionList } from "~/components/transactions/TransactionList";
+import { TransactionGraphsPanel } from "~/components/transactions/TransactionGraphsPanel";
 import { Pagination } from "~/components/transactions/Pagination";
 import { BulkActionBar } from "~/components/transactions/BulkActionBar";
 import { TransactionSkeletonList } from "~/components/transactions/TransactionSkeletons";
@@ -62,6 +63,7 @@ export default function TransactionsPage() {
   const [sortDir, setSortDir] = createSignal("desc");
   const [page, setPage] = createSignal(1);
   const [filtersOpen, setFiltersOpen] = createSignal(false);
+  const [showGraphs, setShowGraphs] = createSignal(false);
 
   // ── Responsive State ─────────────────────────────────────
   const [isMobile, setIsMobile] = createSignal(false);
@@ -162,10 +164,23 @@ export default function TransactionsPage() {
     return params;
   };
 
+  // Analytics uses the same filters without pagination.
+  const analyticsParams = (): TransactionQueryParams | undefined => {
+    if (!profile() || !showGraphs()) return undefined;
+    const params = queryParams();
+    const { page: _page, page_size: _pageSize, sort_by: _sortBy, sort_dir: _sortDir, ...filters } =
+      params;
+    return filters;
+  };
+
   // ── Fetch data ──────────────────────────────────────────
   const [data, { refetch }] = createResource(
     () => (profile() ? queryParams() : undefined),
     (params) => getTransactions(params)
+  );
+
+  const [analytics] = createResource(analyticsParams, (params) =>
+    getTransactionAnalytics(params)
   );
 
   const updateFilter = (fn: () => void) => {
@@ -309,6 +324,8 @@ export default function TransactionsPage() {
               filtersOpen={filtersOpen}
               setFiltersOpen={setFiltersOpen}
               activeFilterCount={activeFilterCount}
+              showGraphs={showGraphs}
+              setShowGraphs={setShowGraphs}
             />
 
             <Show when={filtersOpen()}>
@@ -364,40 +381,53 @@ export default function TransactionsPage() {
               </Show>
             </Show>
 
-            <Suspense fallback={<TransactionSkeletonList count={5} />}>
-              <Show when={data()}>
-                {(payload) => (
-                  <>
-                    <TransactionList
-                      payload={payload()}
-                      loading={data.loading}
-                      visualLoading={visualLoading}
-                      selected={selected}
-                      onToggleSelect={toggleSelect}
-                      onToggleSelectAll={toggleSelectAll}
-                    />
+            <Show
+              when={showGraphs()}
+              fallback={
+                <Suspense fallback={<TransactionSkeletonList count={5} />}>
+                  <Show when={data()}>
+                    {(payload) => (
+                      <>
+                        <TransactionList
+                          payload={payload()}
+                          loading={data.loading}
+                          visualLoading={visualLoading}
+                          selected={selected}
+                          onToggleSelect={toggleSelect}
+                          onToggleSelectAll={toggleSelectAll}
+                        />
 
-                    <Pagination
-                      currentPage={page}
-                      totalPages={payload().total_pages}
-                      onPageChange={(p) => startTransition(() => setPage(p))}
-                    />
-                  </>
-                )}
-              </Show>
-            </Suspense>
+                        <Pagination
+                          currentPage={page}
+                          totalPages={payload().total_pages}
+                          onPageChange={(p) => startTransition(() => setPage(p))}
+                        />
+                      </>
+                    )}
+                  </Show>
+                </Suspense>
+              }
+            >
+              <Suspense fallback={<div class={styles.graphsLoading}>Loading graphs...</div>}>
+                <Show when={analytics()}>
+                  {(payload) => <TransactionGraphsPanel data={payload()} />}
+                </Show>
+              </Suspense>
+            </Show>
 
-            <BulkActionBar
-              selectedCount={selected().size}
-              bulkAction={bulkAction}
-              setBulkAction={setBulkAction}
-              bulkTagId={bulkTagId}
-              setBulkTagId={setBulkTagId}
-              bulkLoading={bulkLoading}
-              metadata={metadata()}
-              onApply={() => void handleBulkApply()}
-              onClear={clearSelection}
-            />
+            <Show when={!showGraphs()}>
+              <BulkActionBar
+                selectedCount={selected().size}
+                bulkAction={bulkAction}
+                setBulkAction={setBulkAction}
+                bulkTagId={bulkTagId}
+                setBulkTagId={setBulkTagId}
+                bulkLoading={bulkLoading}
+                metadata={metadata()}
+                onApply={() => void handleBulkApply()}
+                onClear={clearSelection}
+              />
+            </Show>
           </Show>
         </Suspense>
       </div>

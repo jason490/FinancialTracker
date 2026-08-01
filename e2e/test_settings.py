@@ -26,10 +26,11 @@ def test_settings_tab_navigation(auth_page: Page, base_url: str):
     tablist = auth_page.get_by_role("tablist", name="Settings sections")
     expect(tablist).to_be_visible()
 
-    # Verify all three tabs exist
     expect(tablist.get_by_role("tab", name="Account")).to_be_visible()
     expect(tablist.get_by_role("tab", name="Connections")).to_be_visible()
     expect(tablist.get_by_role("tab", name="Appearance")).to_be_visible()
+    expect(tablist.get_by_role("tab", name="Tags")).to_be_visible()
+    expect(tablist.get_by_role("tab", name="Data")).to_be_visible()
 
 def test_settings_account_tab_default(auth_page: Page, base_url: str):
     """Test that the Account tab is selected by default."""
@@ -102,3 +103,11 @@ def test_settings_tab_url_param(auth_page: Page, base_url: str):
 
     connections_tab = auth_page.get_by_role("tab", name="Connections")
     expect(connections_tab).to_have_attribute("aria-selected", "true")
+
+def test_settings_tags_tab_url_param(auth_page: Page, base_url: str):
+    """Test that navigating with ?tab=tags selects the Tags tab."""
+    auth_page.goto(f"{base_url}/settings?tab=tags")
+
+    tags_tab = auth_page.get_by_role("tab", name="Tags")
+    expect(tags_tab).to_have_attribute("aria-selected", "true")
+    expect(auth_page.get_by_role("heading", name="Tags & Categories", exact=True)).to_be_visible()

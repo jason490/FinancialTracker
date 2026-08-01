@@ -9,7 +9,16 @@ import AppearancePanel from "~/components/settings/AppearancePanel";
 import ConnectionsPanel from "~/components/settings/ConnectionsPanel";
 import DataPanel from "~/components/settings/DataPanel";
 import PlanPanel from "~/components/settings/PlanPanel";
-import { BankIcon, DatabaseIcon, GitHubIcon, PaletteIcon, UserIcon, CreditCardIcon } from "~/components/icons";
+import TagsPanel from "~/components/settings/TagsPanel";
+import {
+  BankIcon,
+  DatabaseIcon,
+  GitHubIcon,
+  PaletteIcon,
+  UserIcon,
+  CreditCardIcon,
+  TagsIcon,
+} from "~/components/icons";
 import AppLayout from "~/layouts/AppLayout";
 import { useAuth } from "~/lib/auth-context";
 import { GITHUB_REPO_URL } from "~/lib/constants";
@@ -19,20 +28,21 @@ import { getSubscription } from "~/lib/subscription";
 import type { SettingsProfile } from "~/lib/types";
 import styles from "~/styles/settings.module.css";
 
-type SettingsTab = "account" | "connections" | "appearance" | "plan" | "data";
+type SettingsTab = "account" | "connections" | "appearance" | "plan" | "tags" | "data";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof UserIcon }> = [
   { id: "account", label: "Account", icon: UserIcon },
   { id: "connections", label: "Connections", icon: BankIcon },
   { id: "appearance", label: "Appearance", icon: PaletteIcon },
   { id: "plan", label: "Plan", icon: CreditCardIcon },
+  { id: "tags", label: "Tags", icon: TagsIcon },
   { id: "data", label: "Data", icon: DatabaseIcon },
 ];
 
 const VISIBLE_TABS = (subscriptionsEnabled: boolean) =>
   subscriptionsEnabled ? TABS : TABS.filter((tab) => tab.id !== "plan");
 
-// SettingsPage centralizes profile, security, Plaid, and theme preferences.
+// SettingsPage centralizes profile, security, connections, tags, and theme preferences.
 export default function SettingsPage() {
   const { user: sessionProfile, refetch: refetchAuth } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,6 +62,7 @@ export default function SettingsPage() {
       tab === "connections" ||
       tab === "appearance" ||
       tab === "plan" ||
+      tab === "tags" ||
       tab === "data"
     ) {
       setActiveTab(tab);
@@ -148,7 +159,8 @@ export default function SettingsPage() {
           <p class={styles.eyebrow}>Preferences</p>
           <h1 class={styles.title}>Settings</h1>
           <p class={styles.subtitle}>
-            Tune your profile, secure sign-in, bank connections, and the look of your workspace.
+            Tune your profile, secure sign-in, bank connections, tags, and the look of your
+            workspace.
           </p>
         </header>
 
@@ -212,6 +224,9 @@ export default function SettingsPage() {
                         connections={connections}
                         onMessage={handleMessage}
                       />
+                    </Show>
+                    <Show when={activeTab() === "tags"}>
+                      <TagsPanel onMessage={handleMessage} />
                     </Show>
                     <Show when={activeTab() === "data"}>
                       <DataPanel onMessage={handleMessage} />

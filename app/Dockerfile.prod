@@ -17,10 +17,10 @@ RUN apk add --no-cache ca-certificates sqlite-libs su-exec \
 
 WORKDIR /app
 
-COPY --from=builder /main /app/main
-COPY database/schema.sql /app/database/schema.sql
-COPY database/migrations /app/database/migrations
-COPY entrypoint.sh /app/entrypoint.sh
+COPY --chown=appuser:appgroup --from=builder /main /app/main
+COPY --chown=appuser:appgroup database/schema.sql /app/database/schema.sql
+COPY --chown=appuser:appgroup database/migrations /app/database/migrations
+COPY --chown=appuser:appgroup entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENV PORT=8080

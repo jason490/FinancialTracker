@@ -41,3 +41,10 @@ type TagBreakdown struct {
 	Color   string  `json:"color"`
 	Total   float64 `json:"total"`
 }
+
+// CategoryBreakdown is an aggregated amount for a tag category (or uncategorized bucket).
+type CategoryBreakdown struct {
+	CategoryName string  `json:"category_name"`
+	Color        string  `json:"color"`
+	Total        float64 `json:"total"`
+}

@@ -10,7 +10,6 @@ def test_dashboard_loading(auth_page: Page, base_url: str):
 
     # Check for sidebar navigation
     expect(auth_page.get_by_role("link", name="Transactions")).to_be_visible()
-    expect(auth_page.get_by_role("link", name="Tags")).to_be_visible()
     expect(auth_page.get_by_role("navigation").get_by_role("link", name="Settings")).to_be_visible()
 
 def test_dashboard_widgets(auth_page: Page, base_url: str):

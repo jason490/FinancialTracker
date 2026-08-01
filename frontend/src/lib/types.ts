@@ -185,6 +185,18 @@ export type TagSliceView = {
   total: number;
 };
 
+export type CategorySliceView = {
+  category_name: string;
+  color: string;
+  total: number;
+};
+
+export type TransactionAnalyticsPayload = {
+  cashflow: MonthCashflow;
+  spending_trend: MonthlySpend[];
+  spending_by_category: CategorySliceView[];
+};
+
 export type DashboardAccountGroups = Record<string, DashboardAccountView[]>;
 
 export type DashboardPayload = {

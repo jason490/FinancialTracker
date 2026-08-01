@@ -57,6 +57,20 @@ type TagSliceView struct {
 	Total   float64 `json:"total"`
 }
 
+// CategorySliceView is an aggregated amount for a tag category without internal identifiers.
+type CategorySliceView struct {
+	CategoryName string  `json:"category_name"`
+	Color        string  `json:"color"`
+	Total        float64 `json:"total"`
+}
+
+// TransactionAnalyticsPayload is filter-scoped spend/income charts for the transactions page.
+type TransactionAnalyticsPayload struct {
+	Cashflow             models.MonthCashflow  `json:"cashflow"`
+	SpendingTrend        []models.MonthlySpend `json:"spending_trend"`
+	SpendingByCategory   []CategorySliceView   `json:"spending_by_category"`
+}
+
 // DashboardAccountGroups maps dashboard bucket keys to visible accounts.
 type DashboardAccountGroups map[string][]DashboardAccountView
 

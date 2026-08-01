@@ -468,3 +468,47 @@ export function TicketIcon(props: IconProps) {
   );
 }
 
+export function ChartIcon(props: IconProps) {
+  return (
+    <svg
+      width={props.size || 20}
+      height={props.size || 20}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      {...props}
+    >
+      <path d="M3 3v18h18" />
+      <path d="M7 14v4" />
+      <path d="M12 10v8" />
+      <path d="M17 6v12" />
+    </svg>
+  );
+}
+
+export function ListIcon(props: IconProps) {
+  return (
+    <svg
+      width={props.size || 20}
+      height={props.size || 20}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      {...props}
+    >
+      <path d="M8 6h13" />
+      <path d="M8 12h13" />
+      <path d="M8 18h13" />
+      <path d="M3 6h.01" />
+      <path d="M3 12h.01" />
+      <path d="M3 18h.01" />
+    </svg>
+  );
+}
+

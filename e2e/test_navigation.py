@@ -8,7 +8,6 @@ def test_navbar_present(auth_page: Page, base_url: str):
     nav = auth_page.get_by_role("navigation")
     expect(nav.get_by_role("link", name="Dashboard")).to_be_visible()
     expect(nav.get_by_role("link", name="Transactions")).to_be_visible()
-    expect(nav.get_by_role("link", name="Tags")).to_be_visible()
     expect(nav.get_by_role("link", name="Settings")).to_be_visible()
 
 def test_navbar_brand(auth_page: Page, base_url: str):
@@ -25,12 +24,15 @@ def test_navigate_dashboard_to_transactions(auth_page: Page, base_url: str):
     expect(auth_page).to_have_url(f"{base_url}/transactions")
     expect(auth_page.get_by_role("heading", name="Transactions", exact=True)).to_be_visible()
 
-def test_navigate_dashboard_to_tags(auth_page: Page, base_url: str):
-    """Test navigation from dashboard to tags via navbar."""
+def test_navigate_dashboard_to_settings_tags(auth_page: Page, base_url: str):
+    """Test navigation from dashboard to the Settings Tags tab."""
     auth_page.goto(f"{base_url}/dashboard")
 
-    auth_page.get_by_role("navigation").get_by_role("link", name="Tags").click()
-    expect(auth_page).to_have_url(f"{base_url}/tags")
+    auth_page.get_by_role("navigation").get_by_role("link", name="Settings").click()
+    expect(auth_page).to_have_url(f"{base_url}/settings")
+
+    auth_page.get_by_role("tab", name="Tags").click()
+    expect(auth_page).to_have_url(f"{base_url}/settings?tab=tags")
     expect(auth_page.get_by_role("heading", name="Tags & Categories", exact=True)).to_be_visible()
 
 def test_navigate_dashboard_to_settings(auth_page: Page, base_url: str):

@@ -37,6 +37,7 @@ prod-deploy:
 	$(MAKE) prod-build-amd64
 	$(MAKE) prod-export
 	scp $(PROD_EXPORT_ARCHIVE) $(VPS_HOST):/tmp/ft-prod-images.tar.gz
+	scp docker-compose.prod.yml $(VPS_HOST):$(VPS_PATH)/docker-compose.prod.yml
 	ssh $(VPS_HOST) 'gunzip -c /tmp/ft-prod-images.tar.gz | docker load'
 	ssh $(VPS_HOST) 'cd $(VPS_PATH) && docker compose -f docker-compose.prod.yml -f docker-compose.prod.runtime.yml up -d'
 	@echo "Deployed to $(VPS_HOST):$(VPS_PATH)"

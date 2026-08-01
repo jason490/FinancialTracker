@@ -1,5 +1,5 @@
 import { Show, Accessor } from "solid-js";
-import { SearchIcon, FilterIcon } from "~/components/icons";
+import { SearchIcon, FilterIcon, ChartIcon, ListIcon } from "~/components/icons";
 import styles from "~/styles/transactions.module.css";
 
 interface TransactionToolbarProps {
@@ -8,6 +8,8 @@ interface TransactionToolbarProps {
   filtersOpen: Accessor<boolean>;
   setFiltersOpen: (val: boolean) => void;
   activeFilterCount: Accessor<number>;
+  showGraphs: Accessor<boolean>;
+  setShowGraphs: (val: boolean) => void;
 }
 
 export function TransactionToolbar(props: TransactionToolbarProps) {
@@ -23,6 +25,19 @@ export function TransactionToolbar(props: TransactionToolbarProps) {
           onInput={(e) => props.setSearch(e.currentTarget.value)}
         />
       </div>
+      <button
+        type="button"
+        class={`${styles.filterToggle} ${props.showGraphs() ? styles.filterToggleActive : ""}`}
+        onClick={() => props.setShowGraphs(!props.showGraphs())}
+        aria-pressed={props.showGraphs()}
+      >
+        <Show when={props.showGraphs()} fallback={<ChartIcon class={styles.filterToggleIcon} />}>
+          <ListIcon class={styles.filterToggleIcon} />
+        </Show>
+        <span class={styles.filterToggleLabel}>
+          {props.showGraphs() ? "Show list" : "Show graphs"}
+        </span>
+      </button>
       <button
         type="button"
         class={`${styles.filterToggle} ${props.filtersOpen() ? styles.filterToggleActive : ""}`}

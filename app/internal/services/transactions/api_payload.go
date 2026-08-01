@@ -3,6 +3,7 @@ package transactions
 import (
 	"FinancialTracker/internal/models"
 	"FinancialTracker/internal/models/external"
+	"FinancialTracker/internal/utils"
 )
 
 // BuildListPayload converts transaction page data into the external API payload.
@@ -62,5 +63,31 @@ func BuildListPayload(data *models.TransactionPageData) *external.TransactionLis
 		TotalPages:   totalPages,
 		Tags:         tagOpts,
 		Categories:   catViews,
+	}
+}
+
+// BuildAnalyticsPayload converts analytics aggregates into the external API payload.
+func BuildAnalyticsPayload(
+	cashflow models.MonthCashflow,
+	trend []models.MonthlySpend,
+	byCategory []models.CategoryBreakdown,
+) *external.TransactionAnalyticsPayload {
+	if trend == nil {
+		trend = []models.MonthlySpend{}
+	}
+
+	slices := make([]external.CategorySliceView, 0, len(byCategory))
+	for i := range byCategory {
+		slices = append(slices, external.CategorySliceView{
+			CategoryName: byCategory[i].CategoryName,
+			Color:        utils.NormalizeTagColor(byCategory[i].Color),
+			Total:        byCategory[i].Total,
+		})
+	}
+
+	return &external.TransactionAnalyticsPayload{
+		Cashflow:           cashflow,
+		SpendingTrend:      trend,
+		SpendingByCategory: slices,
 	}
 }

@@ -1,7 +1,7 @@
 import { clientApiRequest } from "./api";
 import { getPublicApiUrl, isCapacitorClient } from "./env";
 import { ClientApiError } from "./api-error";
-import type { APIError, TransactionListPayload } from "./types";
+import type { APIError, TransactionListPayload, TransactionAnalyticsPayload } from "./types";
 
 export type TransactionQueryParams = {
   search?: string;
@@ -40,6 +40,33 @@ export async function getTransactions(params: TransactionQueryParams = {}): Prom
     transactions: payload.transactions ?? [],
     tags: payload.tags ?? [],
     categories: payload.categories ?? [],
+  };
+}
+
+// appendFilterParams writes shared filter fields onto a URLSearchParams instance.
+function appendFilterParams(query: URLSearchParams, params: TransactionQueryParams) {
+  if (params.search) query.set("search", params.search);
+  if (params.min_amount != null) query.set("min_amount", String(params.min_amount));
+  if (params.max_amount != null) query.set("max_amount", String(params.max_amount));
+  if (params.start_date != null) query.set("start_date", String(params.start_date));
+  if (params.end_date != null) query.set("end_date", String(params.end_date));
+  if (params.category_id != null) query.set("category_id", String(params.category_id));
+  if (params.tags?.length) query.set("tags", params.tags.join(","));
+}
+
+// getTransactionAnalytics fetches filter-scoped cashflow, category donut, and monthly trend data.
+export async function getTransactionAnalytics(
+  params: TransactionQueryParams = {}
+): Promise<TransactionAnalyticsPayload> {
+  const query = new URLSearchParams();
+  appendFilterParams(query, params);
+  const qs = query.toString();
+  const path = qs ? `/api/v1/transactions/analytics?${qs}` : "/api/v1/transactions/analytics";
+  const payload = await clientApiRequest<TransactionAnalyticsPayload>(path);
+  return {
+    ...payload,
+    spending_trend: payload.spending_trend ?? [],
+    spending_by_category: payload.spending_by_category ?? [],
   };
 }
 

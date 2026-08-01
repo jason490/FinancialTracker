@@ -238,6 +238,21 @@ func (s *Storage) GetTransactions(userID int64, provider string, f models.Transa
 	return queries.GetTransactions(s.db, userID, provider, f)
 }
 
+// GetFilteredCashflow returns spend and income totals for the filtered transaction set.
+func (s *Storage) GetFilteredCashflow(userID int64, provider string, f models.TransactionFilters) (models.MonthCashflow, error) {
+	return queries.GetFilteredCashflow(s.db, userID, provider, f)
+}
+
+// GetFilteredSpendingByCategory returns spending by tag category for the filtered set.
+func (s *Storage) GetFilteredSpendingByCategory(userID int64, provider string, f models.TransactionFilters) ([]models.CategoryBreakdown, error) {
+	return queries.GetFilteredSpendingByCategory(s.db, userID, provider, f)
+}
+
+// GetFilteredMonthlyTrend returns monthly income/spend for the filtered set.
+func (s *Storage) GetFilteredMonthlyTrend(userID int64, provider string, f models.TransactionFilters) ([]models.MonthlySpend, error) {
+	return queries.GetFilteredMonthlyTrend(s.db, userID, provider, f)
+}
+
 // GetAllTagsByUserID retrieves all tags belonging to a user
 func (s *Storage) GetAllTagsByUserID(userID int64) ([]models.Tag, error) {
 	return queries.GetAllTagsByUserID(s.db, userID)

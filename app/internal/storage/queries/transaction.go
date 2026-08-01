@@ -1,8 +1,8 @@
 package queries
 
 import (
-    "FinancialTracker/internal/models"
-    "database/sql"
+	"FinancialTracker/internal/models"
+	"database/sql"
 )
 
 // CreateTransaction inserts a new transaction record
@@ -14,22 +14,22 @@ func CreateTransaction(db *sql.DB, t *models.Transaction) error {
 	query := `INSERT INTO transactions (provider, plaid_id, plaid_transaction_id, date, amount, name, merchant_name, plaid_category, pending) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	result, err := db.Exec(query, provider, t.PlaidID, t.PlaidTransactionID, t.Date, t.Amount, t.Name, t.MerchantName, t.PlaidCategory, t.Pending)
-    if err != nil {
-        return err
-    }
-    id, err := result.LastInsertId()
-    if err != nil {
-        return err
-    }
-    t.ID = id
-    return nil
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	t.ID = id
+	return nil
 }
 
-// GetTransactions retrieves transactions for a user with filtering and pagination.
-func GetTransactions(db *sql.DB, userID int64, provider string, f models.TransactionFilters) ([]models.Transaction, int, error) {
-	accountTable, accountAlias := accountJoinForProvider(provider)
-	where := "WHERE " + accountAlias + ".user_id = ? AND " + accountAlias + ".is_hidden = 0 AND t.provider = ?"
-	args := []interface{}{userID, provider}
+// transactionFilterClause builds the shared WHERE clause and args for list and analytics queries.
+// Caller supplies the initial args (typically userID, provider) already matching the base WHERE.
+func transactionFilterClause(accountAlias string, userID int64, provider string, f models.TransactionFilters) (where string, args []interface{}) {
+	where = "WHERE " + accountAlias + ".user_id = ? AND " + accountAlias + ".is_hidden = 0 AND t.provider = ?"
+	args = []interface{}{userID, provider}
 
 	if f.Search != "" {
 		where += " AND (t.name LIKE ? OR t.merchant_name LIKE ? OR t.plaid_category LIKE ?)"
@@ -58,7 +58,6 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 		args = append(args, *f.EndDate)
 	}
 
-	// Filter by Category
 	if f.CategoryID != nil {
 		if *f.CategoryID == 0 {
 			where += ` AND t.id NOT IN (SELECT transaction_id FROM transaction_tags)`
@@ -73,7 +72,6 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 		}
 	}
 
-	// For tag filtering, we need a subquery or join
 	if len(f.Tags) > 0 {
 		where += " AND t.id IN (SELECT transaction_id FROM transaction_tags WHERE tag_id IN ("
 		for i, tagID := range f.Tags {
@@ -85,6 +83,14 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 		}
 		where += "))"
 	}
+
+	return where, args
+}
+
+// GetTransactions retrieves transactions for a user with filtering and pagination.
+func GetTransactions(db *sql.DB, userID int64, provider string, f models.TransactionFilters) ([]models.Transaction, int, error) {
+	accountTable, accountAlias := accountJoinForProvider(provider)
+	where, args := transactionFilterClause(accountAlias, userID, provider, f)
 
 	countQuery := `SELECT COUNT(*) FROM transactions t JOIN ` + accountTable + ` ` + accountAlias + ` ON t.plaid_id = ` + accountAlias + `.id ` + where
 	var totalCount int
@@ -129,7 +135,6 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 		transactions = append(transactions, t)
 	}
 
-	// Load tags for these transactions
 	for i := range transactions {
 		tags, err := GetTransactionTags(db, transactions[i].ID)
 		if err != nil {
@@ -143,29 +148,29 @@ func GetTransactions(db *sql.DB, userID int64, provider string, f models.Transac
 
 // GetTransactionByPlaidID retrieves a transaction by its external transaction ID.
 func GetTransactionByPlaidID(db *sql.DB, plaidTransactionID string) (*models.Transaction, error) {
-    query := `SELECT id, provider, plaid_id, plaid_transaction_id, date, amount, name, merchant_name, plaid_category, pending, created_at 
+	query := `SELECT id, provider, plaid_id, plaid_transaction_id, date, amount, name, merchant_name, plaid_category, pending, created_at 
               FROM transactions WHERE plaid_transaction_id = ?`
-    var t models.Transaction
-    err := db.QueryRow(query, plaidTransactionID).Scan(&t.ID, &t.Provider, &t.PlaidID, &t.PlaidTransactionID, &t.Date, &t.Amount, &t.Name, &t.MerchantName, &t.PlaidCategory, &t.Pending, &t.CreatedAt)
-    if err == sql.ErrNoRows {
-        return nil, nil
-    }
-    return &t, err
+	var t models.Transaction
+	err := db.QueryRow(query, plaidTransactionID).Scan(&t.ID, &t.Provider, &t.PlaidID, &t.PlaidTransactionID, &t.Date, &t.Amount, &t.Name, &t.MerchantName, &t.PlaidCategory, &t.Pending, &t.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &t, err
 }
 
 // UpdateTransaction updates an existing transaction record
 func UpdateTransaction(db *sql.DB, t *models.Transaction) error {
-    query := `UPDATE transactions SET amount = ?, name = ?, merchant_name = ?, plaid_category = ?, pending = ?, date = ? 
+	query := `UPDATE transactions SET amount = ?, name = ?, merchant_name = ?, plaid_category = ?, pending = ?, date = ? 
               WHERE plaid_transaction_id = ?`
-    _, err := db.Exec(query, t.Amount, t.Name, t.MerchantName, t.PlaidCategory, t.Pending, t.Date, t.PlaidTransactionID)
-    return err
+	_, err := db.Exec(query, t.Amount, t.Name, t.MerchantName, t.PlaidCategory, t.Pending, t.Date, t.PlaidTransactionID)
+	return err
 }
 
 // DeleteTransactionByPlaidID deletes a transaction by its Plaid transaction ID
 func DeleteTransactionByPlaidID(db *sql.DB, plaidTransactionID string) error {
-    query := `DELETE FROM transactions WHERE plaid_transaction_id = ?`
-    _, err := db.Exec(query, plaidTransactionID)
-    return err
+	query := `DELETE FROM transactions WHERE plaid_transaction_id = ?`
+	_, err := db.Exec(query, plaidTransactionID)
+	return err
 }
 
 // GetTransactionTags retrieves tags for a specific transaction
@@ -188,7 +193,7 @@ func GetTransactionTags(db *sql.DB, transactionID int64) ([]models.Tag, error) {
 		}
 		tags = append(tags, t)
 	}
-    return tags, nil
+	return tags, nil
 }
 
 func accountJoinForProvider(provider string) (table, alias string) {
